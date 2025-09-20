@@ -1,0 +1,107 @@
+# Bazel JWT Vault Demo - .gitignore
+
+# Environment and Secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Vault data
+vault-data/
+*.hcl.bak
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+*.pyc
+.venv/
+venv/
+ENV/
+env/
+.env
+
+# Bazel
+bazel-*
+.bazel
+.bazelrc.local
+.bazelversion.local
+
+# Docker
+docker-compose.override.yml.local
+.dockerignore.local
+*.log
+broker.log
+
+# IDE and Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# JWT keys (if regenerated)
+jwks.json.bak
+signer_keys.json.bak
+
+# Backup files
+*.bak
+*.backup
+*~
