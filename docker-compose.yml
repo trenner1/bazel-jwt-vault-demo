@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   broker:
     build:
@@ -14,7 +12,7 @@ services:
       ISSUER: ${ISSUER:-http://localhost:8080}
       AUDIENCE: ${AUDIENCE:-vault-broker}
     networks:
-      - ${DOCKER_NETWORK:-old_jenkins-vault-poc_default}
+      - jenkins-vault-poc_default
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8081/.well-known/jwks.json"]
       interval: 30s
@@ -34,12 +32,14 @@ services:
     volumes:
       - ./vault/setup.sh:/setup.sh:ro
     networks:
-      - ${DOCKER_NETWORK:-old_jenkins-vault-poc_default}
+      - jenkins-vault-poc_default
     depends_on:
       broker:
         condition: service_healthy
     command: |
       sh -c "
+        echo 'Installing curl and jq...'
+        apk add --no-cache curl jq
         echo 'Waiting for broker to be ready...'
         until curl -f http://broker:8081/.well-known/jwks.json; do sleep 2; done
         echo 'Setting up Vault configuration for Bazel JWT authentication...'
@@ -52,5 +52,5 @@ services:
 
 # Use external network from existing Jenkins/Vault setup
 networks:
-  ${DOCKER_NETWORK:-old_jenkins-vault-poc_default}:
+  jenkins-vault-poc_default:
     external: true
