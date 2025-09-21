@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 set -euo pipefail
 
 : "${VAULT_ADDR:?set VAULT_ADDR}"
@@ -9,26 +9,27 @@ if ! vault auth list -format=json | jq -e 'has("jwt/")' >/dev/null; then
   vault auth enable jwt
 fi
 
-# 2) Create team-based policy with dynamic templating
+# 2) Create Bazel-style dev policy with dynamic templating
 vault policy write bazel-team /dev/stdin <<'POL'
 # Team-scoped Bazel policy with dynamic path templating
 # Based on Jenkins Vault POC pattern for logical license grouping
 
-# KV v2: team and pipeline-scoped read access
-path "secret/data/bazel/{{identity.entity.aliases.auth_jwt_*.metadata.team}}/*" {
+# KV v2: Pipeline-scoped read access - matches Jenkins POC pattern
+# Dynamic path based on pipeline/job name from JWT metadata
+path "kv/data/dev/apps/{{identity.entity.aliases.auth_jwt_*.metadata.pipeline}}/*" {
   capabilities = ["read"]
 }
 
-# KV v2: pipeline-specific secrets
-path "secret/data/bazel/{{identity.entity.aliases.auth_jwt_*.metadata.team}}/{{identity.entity.aliases.auth_jwt_*.metadata.pipeline}}/*" {
+# KV v2: Team-pipeline-scoped secrets (additional team context)
+path "kv/data/dev/apps/team-{{identity.entity.aliases.auth_jwt_*.metadata.team}}-pipeline/*" {
   capabilities = ["read"]
 }
 
-# KV v2: allow listing within team scope
-path "secret/metadata/bazel/{{identity.entity.aliases.auth_jwt_*.metadata.team}}" {
+# KV v2: allow listing within dev scope
+path "kv/metadata/dev/apps" {
   capabilities = ["list"]
 }
-path "secret/metadata/bazel/{{identity.entity.aliases.auth_jwt_*.metadata.team}}/*" {
+path "kv/metadata/dev/apps/*" {
   capabilities = ["list"]
 }
 
@@ -51,40 +52,41 @@ path "sys/capabilities-self" {
 }
 POL
 
-# 3) KV v2 engine & team-based demo secrets
-vault secrets enable -path=secret -version=2 kv || true
+# 3) KV v2 engine at 'kv' path (matching Jenkins POC)
+vault secrets enable -path=kv -version=2 kv || true
 
-# Create team-scoped secrets following the pattern
-vault kv put secret/bazel/team-alpha/app_build api_key="alpha-api-key-123" db_url="postgres://alpha-db"
-vault kv put secret/bazel/team-beta/service_deploy docker_registry="beta.registry.com" auth_token="beta-token-456"
-vault kv put secret/bazel/team-gamma/ml_pipeline model_path="/models/gamma" gpu_quota="4"
+# Create team-pipeline-scoped secrets following Jenkins POC pattern
+vault kv put kv/dev/apps/team-alpha-pipeline/frontend api_key="alpha-frontend-123" build_env="staging"
+vault kv put kv/dev/apps/team-beta-pipeline/backend docker_registry="beta.registry.com" auth_token="beta-token-456"
+vault kv put kv/dev/apps/team-gamma-pipeline/ml_pipeline model_path="/models/gamma" gpu_quota="4"
 
-# General team secrets
-vault kv put secret/bazel/team-alpha/shared build_env="staging" team_slack="#alpha-builds"
-vault kv put secret/bazel/team-beta/shared build_env="production" team_slack="#beta-deploys"
+# Job-specific secrets (using job metadata from JWT)
+vault kv put kv/dev/apps/frontend_app/config api_endpoint="https://api-staging.example.com" timeout="30s"
+vault kv put kv/dev/apps/backend_service/config db_url="postgres://prod-db" cache_ttl="300"
+vault kv put kv/dev/apps/ml_training/config gpu_cluster="cluster-1" model_version="v2.1"
 
-echo "Created team-scoped secrets:"
-echo "  secret/bazel/team-alpha/* (frontend team)"
-echo "  secret/bazel/team-beta/* (backend team)"
-echo "  secret/bazel/team-gamma/* (ML team)"
+echo "Created Jenkins-style team-scoped secrets:"
+echo "  kv/dev/apps/team-alpha-pipeline/* (frontend team)"
+echo "  kv/dev/apps/team-beta-pipeline/* (backend team)" 
+echo "  kv/dev/apps/team-gamma-pipeline/* (ML team)"
+echo "  kv/dev/apps/{job}/* (job-specific secrets)"
 
 # 4) JWT auth config — point to Broker JWKS
 vault write auth/jwt/config \
   oidc_discovery_url="" \
   jwks_url="http://broker:8081/.well-known/jwks.json" \
-  default_role="bazel-builds"
+  default_role="dev-builds"
 
-# 5) Role mapping — map claims → policies & validate iss/aud
-# Use team-based entity model: sub=team name for logical grouping
+# 5) Role mapping — matches Jenkins POC exactly  
+# Use bazel-specific entity names for team-based entities
 vault write auth/jwt/role/bazel-builds \
   role_type="jwt" \
-  user_claim="pipeline" \
+  user_claim="sub" \
   bound_audiences="vault-broker" \
   bound_issuer="http://localhost:8081" \
-  claim_mappings="repo=repo,target=target,run_id=run_id,team=team,user=user,pipeline=pipeline" \
-  groups_claim="groups" \
+  claim_mappings="pipeline=pipeline,team=team,user=user,repo=repo,target=target,run_id=run_id" \
   policies="bazel-team" \
   token_ttl="5m" \
   token_max_ttl="15m"
 
-echo "Vault JWT auth + role configured."
+echo "Vault JWT auth + role configured (Bazel team-based style)."

@@ -159,8 +159,7 @@ async def exchange(req: Request):
             "issued_by": "broker",
         }
         tok_req = {
-            "no_default_policy": True,
-            "policies": ["bazel-team"],  # Team-based policy with templating
+            "policies": ["default", "bazel-team"],  # Include both default and bazel-team
             "meta": meta,
             "ttl": "10m",
             "num_uses": 50,
@@ -189,10 +188,11 @@ async def sign_demo(body: Dict[str, Any]):
     In prod, your CI/Bazel flow would sign and call /exchange directly.
     """
     now = int(time.time())
+    team = body.get("team", "team-default")
     claims = {
         "iss": ISSUER,
         "aud": AUDIENCE,
-        "sub": body.get("team", "team-default"),  # Team identifier (shared within team)
+        "sub": f"bazel-{team}",  # Team-specific entity (bazel-alpha, bazel-beta, etc.)
         "exp": now + 180,    # 3 minutes
         "iat": now,
         "groups": body.get("groups", ["bazel-dev"]),
@@ -200,7 +200,7 @@ async def sign_demo(body: Dict[str, Any]):
         "target": body.get("target", "//app:build"),
         "run_id": body.get("run_id", f"local-{now}"),
         "user": body.get("user", "developer"),  # Individual developer (for audit)
-        "team": body.get("team", "team-default"),  # Team context for policies
+        "team": team,  # Team context for policies
         "pipeline": body.get("pipeline", body.get("target", "//app:build").replace("/", "_").replace(":", "_")),
     }
 
