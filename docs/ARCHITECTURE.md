@@ -1,8 +1,8 @@
-# 🏗️ System Architecture
+# System Architecture
 
 This document describes the system architecture of the Enterprise OIDC Vault Demo, detailing how Okta, the broker service, and HashiCorp Vault work together to provide secure, team-based secret management.
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Overview](#overview)
 - [Component Architecture](#component-architecture)
@@ -12,7 +12,7 @@ This document describes the system architecture of the Enterprise OIDC Vault Dem
 - [Security Architecture](#security-architecture)
 - [Deployment Architecture](#deployment-architecture)
 
-## 🎯 Overview
+## Overview
 
 The system implements an enterprise-grade authentication architecture using:
 
@@ -32,27 +32,27 @@ The system implements an enterprise-grade authentication architecture using:
 6. **Audit Transparency**: Complete audit trail with real user identity
 7. **Scalable Design**: Supports growing teams and environments
 
-## 🏢 Component Architecture
+##  Component Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        Enterprise Network                        │
+│                        Enterprise Network                       │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐     │
-│  │              │    │              │    │              │     │
-│  │     Okta     │    │ JWT Broker   │    │ HashiCorp    │     │
-│  │   Identity   │◄──►│   Service    │◄──►│    Vault     │     │
-│  │   Provider   │    │              │    │              │     │
-│  │              │    │              │    │              │     │
-│  └──────────────┘    └──────────────┘    └──────────────┘     │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐       │
+│  │              │    │              │    │              │       │
+│  │     Okta     │    │ JWT Broker   │    │ HashiCorp    │       │
+│  │   Identity   │◄──►│   Service    │◄──►│    Vault     │       │
+│  │   Provider   │    │              │    │              │       │
+│  │              │    │              │    │              │       │
+│  └──────────────┘    └──────────────┘    └──────────────┘       │
 │                                                                 │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │                Development Teams                        │   │
-│  ├─────────────┬─────────────┬─────────────┬─────────────┤   │
-│  │   Mobile    │   Backend   │  Frontend   │   DevOps    │   │
-│  │ Developers  │ Developers  │ Developers  │    Team     │   │
-│  └─────────────┴─────────────┴─────────────┴─────────────┘   │
+│  ┌───────────────────────────────────────────────────────┐      │
+│  │                Development Teams                      │      │
+│  ├─────────────┬─────────────┬─────────────┬─────────────┤      │
+│  │   Mobile    │   Backend   │  Frontend   │   DevOps    │      │
+│  │ Developers  │ Developers  │ Developers  │    Team     │      │
+│  └─────────────┴─────────────┴─────────────┴─────────────┘      │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -77,7 +77,7 @@ The system implements an enterprise-grade authentication architecture using:
 - **Policy Engine**: Team-based access control policies
 - **Identity Management**: Entity and group management
 
-## 🔐 Authentication Flow
+## Authentication Flow
 
 ### PKCE Authentication Sequence (CLI + Browser)
 
@@ -132,7 +132,7 @@ The broker maintains secure sessions with:
 - **Auto-Expiration**: Sessions expire with token TTL
 - **Team Context**: Session stores team membership
 
-## 👥 Team-Based Access Model
+## Team-Based Access Model
 
 ### Team Identity Mapping
 
@@ -147,7 +147,7 @@ devops-team          →     entity_devops_team     →    kv/dev/*
 
 ### Policy Resolution
 
-## 🛠️ CLI Tools Architecture
+## CLI Tools Architecture
 
 ### Tool Ecosystem
 
@@ -156,22 +156,22 @@ devops-team          →     entity_devops_team     →    kv/dev/*
 │                    Developer Workflow                       │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│  ┌──────────────────┐    ┌──────────────────┐              │
-│  │ bazel-auth-simple│    │   bazel-build    │              │
-│  │ (Zero deps)      │    │ (Bazel wrapper)  │              │
-│  │ - curl only      │    │ - Auto auth      │              │
-│  │ - PKCE flow      │    │ - Token reuse    │              │
-│  │ - Auto browser   │    │ - Metadata       │              │
-│  └──────────────────┘    └──────────────────┘              │
-│           │                        │                       │
-│           └────────┬───────────────┘                       │
-│                    │                                       │
-│         ┌──────────▼──────────┐                           │
-│         │   Enhanced Broker   │                           │
-│         │   - PKCE security   │                           │
-│         │   - Session mgmt    │                           │
-│         │   - Auto-copy UI    │                           │
-│         └─────────────────────┘                           │
+│  ┌──────────────────┐    ┌──────────────────┐               │
+│  │ bazel-auth-simple│    │   bazel-build    │               │
+│  │ (Zero deps)      │    │ (Bazel wrapper)  │               │
+│  │ - curl only      │    │ - Auto auth      │               │
+│  │ - PKCE flow      │    │ - Token reuse    │               │
+│  │ - Auto browser   │    │ - Metadata       │               │
+│  └──────────────────┘    └──────────────────┘               │
+│           │                        │                        │
+│           └────────┬───────────────┘                        │
+│                    │                                        │
+│         ┌──────────▼──────────┐                             │
+│         │   Enhanced Broker   │                             │
+│         │   - PKCE security   │                             │
+│         │   - Session mgmt    │                             │
+│         │   - Auto-copy UI    │                             │
+│         └─────────────────────┘                             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -191,7 +191,7 @@ devops-team          →     entity_devops_team     →    kv/dev/*
 4. **Environment Integration**: Direct export to shell environment
 5. **Pipeline Metadata**: Automatic inclusion of build context
 
-## 👥 Team-Based Access Model
+## Team-Based Access Model
 
 Teams are automatically assigned based on Okta group membership:
 
@@ -211,7 +211,7 @@ Teams are completely isolated through:
 - **Group-Based Assignment**: Automatic team assignment via Okta groups
 - **Audit Separation**: Team activities logged with user identity
 
-## 📊 Data Flow Diagrams
+## Data Flow Diagrams
 
 ### Token Exchange Flow
 
@@ -264,7 +264,7 @@ User Request
 └─────────────────┘
 ```
 
-## 🛡️ Security Architecture
+## Security Architecture
 
 ### Defense in Depth
 
@@ -272,25 +272,25 @@ User Request
 ┌─────────────────────────────────────────────────────────┐
 │                  Security Layers                        │
 ├─────────────────────────────────────────────────────────┤
-│ 🌐 Network Security                                     │
-│   • TLS encryption for all communication               │
-│   • Docker network isolation                           │
-│   • Firewall rules and network policies                │
+│  Network Security                                       │
+│   • TLS encryption for all communication                │
+│   • Docker network isolation                            │
+│   • Firewall rules and network policies                 │
 ├─────────────────────────────────────────────────────────┤
-│ 🔐 Authentication Security                              │
-│   • Enterprise Okta MFA                                │
-│   • OIDC protocol compliance                           │
-│   • Short-lived token lifecycle                        │
+│  Authentication Security                                │
+│   • Enterprise Okta MFA                                 │
+│   • OIDC protocol compliance                            │
+│   • Short-lived token lifecycle                         │
 ├─────────────────────────────────────────────────────────┤
-│ 👥 Authorization Security                               │
-│   • Team-based access control                          │
-│   • Principle of least privilege                       │
-│   • Dynamic policy evaluation                          │
+│  Authorization Security                                 │
+│   • Team-based access control                           │
+│   • Principle of least privilege                        │
+│   • Dynamic policy evaluation                           │
 ├─────────────────────────────────────────────────────────┤
-│ 📝 Audit & Compliance                                   │
-│   • Complete audit trail                               │
-│   • Immutable log storage                              │
-│   • Real-time monitoring                               │
+│  Audit & Compliance                                     │
+│   • Complete audit trail                                │
+│   • Immutable log storage                               │
+│   • Real-time monitoring                                │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -314,7 +314,7 @@ User Request
 - **Compliance**: Standards-compliant OIDC implementation
 - **Key Management**: Secure key storage and rotation
 
-## 🚀 Deployment Architecture
+## Deployment Architecture
 
 ### Development Environment
 
@@ -367,7 +367,7 @@ networks:
 - **Key Management**: Enterprise key management (HSM)
 - **Compliance**: SOC2, FedRAMP compliance features
 
-## 📈 Performance Characteristics
+## Performance Characteristics
 
 ### Throughput
 - **Authentication Rate**: 100+ authentications/second
@@ -387,7 +387,7 @@ networks:
 - **Backup Strategy**: Regular Vault snapshots
 - **Disaster Recovery**: Cross-region replication
 
-## 🔧 Integration Points
+## Integration Points
 
 ### External Systems
 - **CI/CD Pipelines**: Jenkins, GitHub Actions, Azure DevOps
@@ -401,7 +401,7 @@ networks:
 - **GraphQL**: Rich query interface for complex operations
 - **gRPC**: High-performance internal communication
 
-## 📚 References
+## References
 
 - [Okta OIDC Documentation](https://developer.okta.com/docs/concepts/oauth-openid/)
 - [HashiCorp Vault OIDC Auth](https://www.vaultproject.io/docs/auth/jwt)
