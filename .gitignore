@@ -10,6 +10,12 @@
 *.p12
 *.pfx
 
+# JWT Signing Keys (broker-generated)
+jwt_signing_key
+jwt_signing_key.pub
+jwks.json
+signer_keys.json
+
 # Vault data
 vault-data/
 *.hcl.bak

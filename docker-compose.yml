@@ -8,45 +8,20 @@ services:
       - "8081:8081"
     environment:
       VAULT_ADDR: ${VAULT_ADDR:-http://vault:8200}
-      VAULT_TOKEN: ${VAULT_ROOT_TOKEN}
-      ISSUER: ${ISSUER:-http://localhost:8080}
-      AUDIENCE: ${AUDIENCE:-vault-broker}
+      VAULT_ROOT_TOKEN: ${VAULT_ROOT_TOKEN}
+      OKTA_DOMAIN: ${OKTA_DOMAIN}
+      OKTA_CLIENT_ID: ${OKTA_CLIENT_ID}
+      OKTA_CLIENT_SECRET: ${OKTA_CLIENT_SECRET}
+      OKTA_AUTH_SERVER_ID: ${OKTA_AUTH_SERVER_ID}
+      OKTA_REDIRECT_URI: ${OKTA_REDIRECT_URI:-http://localhost:8081/auth/callback}
     networks:
       - jenkins-vault-poc_default
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/.well-known/jwks.json"]
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 30s
-    env_file:
-      - .env
-
-  # Vault setup service - runs once to configure existing Vault
-  vault-setup:
-    image: hashicorp/vault:1.16
-    container_name: bazel-vault-setup
-    environment:
-      VAULT_ADDR: ${VAULT_ADDR:-http://vault:8200}
-      VAULT_TOKEN: ${VAULT_ROOT_TOKEN}
-    volumes:
-      - ./vault/setup.sh:/setup.sh:ro
-    networks:
-      - jenkins-vault-poc_default
-    depends_on:
-      broker:
-        condition: service_healthy
-    command: |
-      sh -c "
-        echo 'Installing curl and jq...'
-        apk add --no-cache curl jq
-        echo 'Waiting for broker to be ready...'
-        until curl -f http://broker:8081/.well-known/jwks.json; do sleep 2; done
-        echo 'Setting up Vault configuration for Bazel JWT authentication...'
-        /setup.sh
-        echo 'Vault setup complete!'
-      "
-    restart: "no"
     env_file:
       - .env
 

@@ -1,562 +1,391 @@
-# Bazel JWT Vault Demo - Team-Based Entity Model
+# Bazel JWT Vault Demo - Enterprise Team-Based Authentication
 
-A demonstration of **team-based JWT authentication** with HashiCorp Vault, implementing a licensing-efficient entity model where team members share entities based on the [Jenkins Vault POC](https://github.com/trenner1/jenkins-vault-poc) pattern.
+A demonstration of **enterprise team-based authentication** with HashiCorp Vault and Okta, implementing **broker-generated JWT tokens** for team-based secret access. Provi## 📚 Documentation
 
-## What This POC Proves
+- **[Complete Setup Guide](docs/SETUP.md)**: Step-by-step configuration instructions
+- **[Architecture Documentation](docs/ARCHITECTURE.md)**: System design and JWT flow details
+- **[Development Guide](docs/DEVELOPMENT.md)**: Development and troubleshooting
+- **[Testing Guide](docs/TESTING.md)**: Comprehensive testing procedures
 
-- **Zero Entity Churning**: Same entity/alias reused across team member builds
-- **Logical Workload Grouping**: Entity count scales with teams, organizing identical workloads efficiently  
-- **Individual Attribution**: Child tokens contain individual developer metadata while sharing team entities
-- **Secure Team Isolation**: Teams cannot access other teams' secrets or entities
-- **Scalable Architecture**: Supports organizations with multiple development teams and large monorepos
+## ⚡ Production Ready
 
-**Verified**: Real JWT authentication with team-specific entity creation and same-team entity sharing - **proven licensing efficiency with no churning detected**.
+This system includes enterprise features for production deployment:
+- **RSA-Signed JWTs**: Secure broker-generated tokens with 2048-bit RSA key pairs
+- **Team Entity Stability**: Consistent team entities eliminate access inconsistencies
+- **Time-Limited Tokens**: Automatic expiration and usage limits
+- **Network Integration**: Works within existing Docker network infrastructure
+- **Scalable Architecture**: Stateless broker can be horizontally scaled
+- **Team Context Selection**: Seamless multi-team user experience
 
-## Environment Variables
+For detailed production deployment instructions, see [docs/SETUP.md](docs/SETUP.md).tion team isolation with complete automation and stable entity management.
 
-The system uses environment variables for secure configuration. Copy `.env.example` to `.env` and configure:
+## 🚀 What This System Provides
 
-| Variable | Description | Example | Required |
-|----------|-------------|---------|-----------|
-| `VAULT_ROOT_TOKEN` | Vault root token for admin operations | `hvs.xxxxxxxxxxxx` | Yes |
-| `VAULT_ADDR` | Vault server address | `http://localhost:8200` | Yes |
-| `BROKER_URL` | JWT broker service URL | `http://localhost:8081` | Yes |
-| `ISSUER` | JWT issuer claim | `http://localhost:8081` | Yes |
+### **Enterprise Team-Based Authentication**
+- **Okta Integration**: Single sign-on with your existing Okta identity provider using PKCE flow
+- **Team Context Selection**: Multi-team users can select their working context
+- **Broker-Generated JWTs**: Secure RSA-signed tokens with team subjects for stable entity management
+- **Stable Team Entities**: One entity per team with consistent aliases, eliminating entity churn
+- **Zero Configuration**: Developers simply login with their Okta credentials and select team context
+- **Complete Automation**: OIDC flow, team selection, JWT generation, and Vault authentication all seamless
 
-> **Security Note**: The `.env` file is excluded from Git via `.gitignore`. Never commit secrets to version control.
+### **Security & Compliance**
+- **RSA-Signed JWTs**: Broker-generated tokens with 2048-bit RSA key pairs for enhanced security
+- **Team-Based Isolation**: Teams can only access their designated secrets via stable team entities
+- **Stable Entity Management**: One entity per team eliminates entity churn and access inconsistencies
+- **Time-Limited Tokens**: Tokens expire automatically (2h default, 4h max)
+- **Limited Usage**: Tokens have restricted number of uses for security
+- **Audit Trail**: All authentication events logged with team context and user metadata
+- **Enterprise Standards**: OIDC compliance with secure JWT token architecture
 
-## Architecture Overview
+### **Developer Experience**
+- **Enhanced Callback UI**: Beautiful web interface with auto-copy functionality
+- **CLI Tools**: Zero-dependency authentication tools for command-line usage
+- **Bazel Integration**: Seamless wrapper for Bazel builds with automatic authentication
+- **Copy-Paste Friendly**: All commands and tokens easily copyable from web interface
 
-### Team-Based Entity Model
+### **Enterprise Ready**
+- **Scales with Organization**: Team model based on stable team entities, not individual management
+- **Identity Integration**: Works with existing Okta directory and group structure
+- **Pipeline Integration**: Designed for CI/CD pipeline authentication with team context selection
+- **Network Integration**: Works within existing Docker network infrastructure
+- **Entity Stability**: Teams get consistent entities with stable aliases across all authentications
+
+## 🏗️ Architecture Overview
+
+### Enterprise Team-Based Authentication Flow
+
+```mermaid
+sequenceDiagram
+    participant Dev as Developer
+    participant CLI as CLI Tool
+    participant Browser as Web Browser
+    participant Broker as JWT Broker
+    participant Okta as Okta Identity
+    participant Vault as HashiCorp Vault
+    participant Secrets as Team Secrets
+
+    Note over Dev,Secrets: Broker-Generated JWT Flow
+
+    Dev->>CLI: ./tools/bazel-auth-simple
+    CLI->>Broker: POST /cli/start (generate PKCE)
+    Broker-->>CLI: Auth URL + PKCE state
+    CLI->>Browser: Open auth URL
+    Browser->>Okta: PKCE authorization request
+    Dev->>Okta: Enter Okta credentials
+    Okta->>Okta: Verify user & groups
+    Okta->>Broker: Callback with auth code
+    Broker->>Okta: Exchange code + PKCE verifier
+    Okta-->>Broker: ID token + user groups
+    Broker->>Broker: Determine team memberships
+    alt Multiple Teams
+        Broker-->>Browser: Team selection interface
+        Dev->>Browser: Select team context
+        Browser->>Broker: POST selected team
+    end
+    Broker->>Broker: Generate RSA-signed JWT (sub=team)
+    Broker->>Vault: Authenticate with team JWT
+    Vault->>Broker: Verify JWT signature (public key)
+    Vault->>Vault: Create/reuse team entity + alias
+    Vault-->>Broker: Team-scoped Vault token
+    Broker-->>Browser: Enhanced callback page + session ID
+    Dev->>CLI: Copy session ID from browser
+    CLI->>Broker: POST /exchange with session ID
+    Broker-->>CLI: Child Vault token with metadata
+    CLI-->>Dev: Export VAULT_TOKEN for use
+    
+    Dev->>Vault: Access secrets with token
+    Vault->>Secrets: Check team policies
+    Secrets-->>Dev: Team-specific secret values
+```
+
+### Network Architecture
 
 ```
-Team Alpha (bazel-alpha)  →  Entity: bazel-alpha  →  Secrets: secret/data/bazel/alpha/*
-├── alice.smith          
-├── bob.jones            
-└── carol.wilson         
-
-Team Beta (bazel-beta)    →  Entity: bazel-beta   →  Secrets: secret/data/bazel/beta/*
-├── dave.brown           
-├── eve.taylor           
-└── frank.moore          
-
-Team Gamma (bazel-gamma)  →  Entity: bazel-gamma  →  Secrets: secret/data/bazel/gamma/*
-├── grace.davis          
-└── henry.clark          
+┌─────────────────────────────────────────────────────────────┐
+│                Jenkins Vault POC Network                    │
+│                  (jenkins-vault-poc_default)                │
+│                                                             │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
+│  │   Jenkins   │  │    Vault    │  │   JWT Broker        │ │
+│  │ 172.18.0.3  │  │ 172.18.0.2  │  │   172.18.0.4        │ │
+│  │    :8080    │  │    :8200    │  │      :8081          │ │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘ │
+│                             │                │             │
+│                    ┌─────────────────┐      │             │
+│                    │ Okta Identity   │      │             │
+│                    │ (External OIDC) │      │             │
+│                    └─────────────────┘      │             │
+│                                             │             │
+│                    ┌─────────────────────────┐             │
+│                    │ RSA Key Pair            │             │
+│                    │ (JWT Signing)           │             │
+│                    └─────────────────────────┘             │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-**Benefits:**
-- **No Churning**: Same entity reused by all team members (bazel-alpha, bazel-beta, etc.)
-- **Logical Organization**: Entity count = number of teams (groups identical workloads efficiently)
-- **Individual Attribution**: Child tokens track individual developers while sharing team entities
-- **Secure Isolation**: Teams cannot access other teams' secrets or entities
-- **Scalable**: Supports organizations with multiple teams and large monorepos
+## 🚀 Quick Start
 
-```
-┌─────────────┐    JWT          ┌─────────────┐   Vault Token    ┌─────────────┐
-│ Bazel Build │ ──────────────> │ JWT Broker  │ ───────────────> │    Vault    │
-│ (Team Alpha)│  (team context) │             │  (team-scoped)   │ Team Secrets│
-└─────────────┘                 └─────────────┘                  └─────────────┘
-      ↑                                ↓                                  
-  Team Detection                 Entity: bazel-alpha                      
-  via Git/Env                   (shared by team)                          
+### Prerequisites
+- Docker Desktop running
+- Okta developer account (free at https://developer.okta.com)
+
+### 1. Setup
+```bash
+# Clone and configure
+git clone https://github.com/trenner1/bazel-jwt-vault-demo.git
+cd bazel-jwt-vault-demo
+cp broker/.env.example broker/.env
+# Edit broker/.env with your Okta details (see docs/SETUP.md for details)
 ```
 
-## Comparison with Other Approaches
+### 2. Run
+```bash
+# Start services
+docker-compose up -d
 
-| Approach | Entity Count | Vault Licensing | Team Isolation | Management Complexity |
-|----------|-------------|----------------|----------------|---------------------|
-| **Per Developer** | 1 per developer | High | Excellent | Medium |
-| **Single Shared** | 1 total | Minimal | None | Low |
-| **Per Team (This POC)** | 1 per team | Low | Good | Medium |
-
-### Why Team-Based Entities are Optimal:
-
-- **Logical Grouping**: Groups identical workloads by team function rather than individual identity
-- **Security**: Natural isolation boundaries align with organizational structure  
-- **Scalability**: Linear growth with workload types rather than individual users
-- **Management**: Easier to audit and manage team-based access patterns
-
-## Project Structure
-
-```
-bazel-jwt-vault-demo/
-├── broker/                    # FastAPI JWT broker service
-│   ├── app.py                 # Main broker application (team-based entities)
-│   ├── gen_keys.py            # RSA key generation utility
-│   ├── requirements.txt       # Python dependencies
-│   ├── jwks.json              # Public keys (JWKS format)
-│   └── signer_keys.json       # Private keys (development only)
-├── client/                    # Demo client simulation
-│   └── build_sim.sh           # Team-based build workflow demo
-├── vault/                     # Vault configuration
-│   └── setup.sh               # Vault setup with team policies
-├── docker-compose.yml         # Container orchestration
-├── start-broker.sh            # Broker startup script
-├── verify_entity_sharing.sh   # Entity sharing verification script
-├── .env.example               # Environment template
-└── README.md                  # This file
+# Test authentication
+./tools/bazel-auth-simple
 ```
 
-## Prerequisites
+📖 **For complete setup instructions**, see [docs/SETUP.md](docs/SETUP.md)
 
-- **Docker** and **Docker Compose**
-- **HashiCorp Vault** (existing instance)
-- **curl** and **jq** (for testing - included in Docker images)
-- **Git** (for team detection)
+## 🔐 Authentication Flow
 
-## Quick Start
+### Web Browser (Enhanced UX)
+1. Navigate to `http://localhost:8081`
+2. Login with Okta (PKCE flow)
+3. Select team context (if multiple teams)
+4. Auto-copy session ID from enhanced callback
+5. Exchange for team-scoped Vault tokens
 
-### Environment Setup
+### CLI Tools (Zero Dependencies)
+```bash
+./tools/bazel-auth-simple  # Recommended - no dependencies
+./tools/bazel-auth         # Python-based with advanced features  
+./tools/bazel-build        # Bazel wrapper with auto-auth
+```
 
-1. **Configure Environment Variables**:
-   ```bash
-   # Copy environment template
-   cp .env.example .env
-   
-   # Edit .env with your actual values
-   vim .env
-   
-   # Optional: Remove any existing virtual environment (not needed for Docker)
-   rm -rf .venv
-   ```
+| Tool | Purpose | Dependencies | Usage |
+|------|---------|--------------|-------|
+| `bazel-auth-simple` | Zero-dependency authentication | curl only | Primary CLI tool |
+| `bazel-auth` | Full-featured authentication | Python + requests | Advanced features |
+| `bazel-build` | Bazel wrapper with auth | bash + curl | Seamless builds |
 
-   Required environment variables:
-   ```bash
-   # Vault Configuration
-   VAULT_ROOT_TOKEN=your-vault-root-token-here
-   VAULT_ADDR=http://localhost:8200
-   
-   # Broker Configuration  
-   BROKER_URL=http://localhost:8081
-   ISSUER=http://localhost:8081
-   ```
+### Tool Comparison
 
-   > **Security**: Never commit the `.env` file to Git. It contains sensitive tokens.
+**`./tools/bazel-auth-simple`** (Recommended)
+- ✅ Zero dependencies (only needs `curl`)
+- ✅ Works on any system
+- ✅ Auto-opens browser
+- ✅ Clear command output
+- ✅ Environment variable export
 
-### Docker Deployment (Recommended)
+**`./tools/bazel-build`**
+- ✅ Seamless Bazel integration
+- ✅ Automatic token refresh
+- ✅ Pipeline-friendly
+- ✅ Smart caching
 
-2. **Start the Services**:
-   ```bash
-   # Build and start the broker (no virtual environment needed)
-   docker-compose up -d
-   
-   # Configure Vault with team policies
-   docker-compose run --rm vault-setup
-   ```
+## 🔐 Authentication Flow Details
 
-3. **Test Team-Based Authentication**:
-   ```bash
-   # Verify team entity sharing
-   ./verify_entity_sharing.sh
-   
-   # Output should show:
-   # Team Alpha Entity: entity_12345
-   # Team Beta Entity: entity_67890  
-   # Team members share same entities
-   ```
-
-### Local Development (Alternative)
-
-For local development without Docker (requires local Python setup):
-
-1. **Install Dependencies**:
-   ```bash
-   # Ensure Python 3.11+ is installed
-   cd broker && pip install -r requirements.txt && cd ..
-   ```
-
-2. **Start the JWT Broker**:
-   ```bash
-   # Load environment variables
-   source .env
-   
-   # Start the broker directly (requires dependencies installed)
-   cd broker && python -m uvicorn app:app --host 0.0.0.0 --port 8081
-   ```
-
-3. **Configure Vault**:
-   ```bash
-   # Run the Vault setup script
-   ./vault/setup.sh
-   ```
-
-4. **Test Team Authentication**:
-   ```bash
-   # Test team entity model
-   ./verify_entity_sharing.sh
-   ```
-
-> **Note**: Docker deployment is recommended as it handles all dependencies automatically.
-
-### Verify Team Entity Model
+### Example Token Exchange
 
 ```bash
-# Verify team-based entity sharing (logical workload grouping)
-./verify_entity_sharing.sh
+# After Okta authentication, exchange session for Vault token
+curl -X POST "http://localhost:8081/exchange" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "session_id": "session_abc123...",
+    "pipeline": "my-build-pipeline",
+    "repo": "my-repository",
+    "target": "my-build-target"
+  }'
 
-# This proves:
-# - Different teams get different entities (bazel-alpha, bazel-beta)  
-# - Same team members share the same entity (no churning)
-# - Individual metadata preserved in child tokens
-```
-
-## API Endpoints
-
-### JWT Broker (`http://localhost:8081`)
-
-#### `GET /.well-known/jwks.json`
-Returns the public key set for JWT verification.
-
-#### `POST /demo/sign`
-Development endpoint that signs demo JWTs with team-specific subjects.
-
-**Request:**
-```json
+# Response includes team-scoped Vault token
 {
-  "team": "alpha",
-  "user": "alice@company.com",
-  "repo": "monorepo",
-  "target": "//frontend:app",
-  "pipeline": "frontend_app",
-  "run_id": "build-123"
-}
-```
-
-**Response:**
-```json
-{
-  "assertion": "eyJ0eXAiOiJKV1Q...",
-  "claims": {
-    "iss": "http://localhost:8081",
-    "aud": "vault-broker",
-    "sub": "bazel-alpha",
-    "team": "alpha",
-    "user": "alice@company.com",
-    "pipeline": "frontend_app",
-    "target": "//frontend:app",
-    "exp": 1234568790,
-    "iat": 1234567890
+  "token": "hvs.CAESIJ...",
+  "ttl": 7200,
+  "uses_remaining": 10,
+  "policies": ["bazel-base", "bazel-mobile-team"],
+  "metadata": {
+    "team": "mobile-team",
+    "user": "developer@company.com",
+    "name": "John Developer",
+    "pipeline": "my-build-pipeline"
   }
 }
 ```
 
-#### `POST /exchange`
-Exchanges a signed JWT for a constrained Vault token.
+## 👥 Team-Based Access Control
 
-**Request:**
-```json
-{
-  "assertion": "eyJ0eXAiOiJKV1Q..."
-}
-```
+### Team Selection and Entity Management
 
-**Response:**
-```json
-{
-  "vault_token": "hvs.CAESIJ...",
-  "meta": {
-    "repo": "monorepo",
-    "target": "//frontend:app",
-    "team": "alpha",
-    "pipeline": "frontend_app",
-    "user": "alice@company.com",
-    "run_id": "build-123",
-    "entity_id": "entity_12345",
-    "issued_by": "broker"
-  }
-}
-```
+Teams are automatically assigned based on Okta group membership. Users with multiple team memberships can select their working context:
 
-## Key Management
-
-### Generate New Keys
-
-```bash
-# Using Python directly
-cd broker && python gen_keys.py
-
-# Using Docker
-docker-compose run --rm broker python gen_keys.py
-```
-
-This generates:
-- `broker/jwks.json` - Public keys in JWKS format (used by Vault)
-- `broker/signer_keys.json` - Private keys (development only)
-
-### Key Security Notes
-
-- **Development**: Private keys are stored in `signer_keys.json` for demo purposes
-- **Production**: Use proper key management (HSMs, Vault Transit, etc.)
-- **Rotation**: Regenerate keys periodically and update Vault configuration
-
-## Security Best Practices
-
-### Environment Variable Management
-
-**DO:**
-- Use `.env` files for local development
-- Use Docker secrets or Kubernetes secrets in production
-- Rotate Vault tokens regularly
-- Use specific Vault policies with minimal required permissions
-
-❌ **DON'T:**
-- Commit `.env` files to Git (excluded via `.gitignore`)
-- Use root tokens in production (use role-based tokens)
-- Share environment files between environments
-- Log sensitive environment variables
-
-### Vault Token Security
-
-This demo uses **regular child tokens** (not orphan tokens) for better security:
-
-```bash
-# Regular child tokens (recommended)
-vault token create -policy=bazel-policy -ttl=24h
-
-# Orphan tokens (avoid in production)
-vault token create -policy=bazel-policy -orphan
-```
-
-**Benefits of regular child tokens:**
-- Automatic cleanup when parent expires
-- Better audit trail
-- Proper token hierarchy
-
-### Production Considerations
-
-- **Network Security**: Use TLS for all Vault communication
-- **Token TTL**: Short-lived tokens (1-24 hours)
-- **Policy Scope**: Team-specific policies with minimal privileges
-- **Monitoring**: Alert on unusual token creation patterns
-- **Access Control**: Restrict broker service network access
-
-## Security Model
-
-### JWT Claims Structure (Team-Based Model)
-Required claims in build JWTs:
-```json
-{
-  "iss": "http://localhost:8081",       // Broker issuer
-  "sub": "bazel-alpha",                 // Team-specific entity identifier
-  "aud": "vault-broker",                // Vault audience
-  "team": "alpha",                      // Team name for policy templating
-  "pipeline": "frontend_app",           // Pipeline name
-  "run_id": "123",                      // Build number
-  "user": "alice.smith",                // Individual developer
-  "repo": "monorepo",                   // Repository name
-  "target": "//frontend:app",           // Build target
-  "iat": 1234567890,                    // Issued at
-  "exp": 1234568790                     // Expires
-}
-```
-
-**Key Points:**
-- `sub`: Team-specific entity (bazel-alpha, bazel-beta, etc.)
-- `team`: Team identifier for policy templating
-- `user`: Individual developer (audit only, doesn't affect entity)
-- Same team members share the same `sub` value
-
-### Vault Token Constraints
-Child tokens issued by the broker are constrained with:
-- **TTL**: 10 minutes maximum lifetime
-- **Uses**: Limited to 50 operations
-- **Policies**: Restricted to `bazel-team` policy (team-scoped)
-- **Metadata**: Includes team, pipeline, user for auditing
-- **Non-renewable**: Cannot be extended
-
-### Vault Policies (Team-Based Model)
-The `bazel-team` policy uses dynamic templating for team-scoped access:
-```hcl
-# Team-scoped read access
-path "secret/data/bazel/{{identity.entity.aliases.auth_jwt_*.metadata.team}}/*" {
-  capabilities = ["read"]
-}
-
-# Team-pipeline-scoped secrets  
-path "secret/data/bazel/{{identity.entity.aliases.auth_jwt_*.metadata.team}}/{{identity.entity.aliases.auth_jwt_*.metadata.pipeline}}/*" {
-  capabilities = ["read"]
-}
-```
-
-**Policy Templating Examples:**
-- JWT with `"team": "alpha"` → Access to `secret/data/bazel/alpha/*`
-- JWT with `"team": "beta", "pipeline": "backend_api"` → Access to `secret/data/bazel/beta/backend_api/*`
-
-**Vault Role Configuration:**
-```bash
-vault write auth/jwt/role/bazel-builds \
-  role_type="jwt" \
-  user_claim="sub" \
-  bound_audiences="vault-broker" \
-  bound_issuer="http://localhost:8081" \
-  claim_mappings="team=team,pipeline=pipeline,user=user" \
-  policies="bazel-team"
-```
-
-## Team Configuration
-
-### Team Detection
-
-Teams are detected automatically via:
-
-1. **Git Repository Context** (current implementation):
-   ```bash
-   # Team alpha developers
-   git config user.email alice@company.com    # → team: alpha
-   git config user.email bob@company.com      # → team: alpha
-   
-   # Team beta developers  
-   git config user.email dave@company.com     # → team: beta
-   git config user.email eve@company.com      # → team: beta
-   ```
-
-2. **Environment Override**:
-   ```bash
-   export TEAM=gamma  # Override team detection
-   ```
-
-### Team-to-Secrets Mapping
-
-```bash
-# Team Alpha (Frontend) - Entity: bazel-alpha
-vault kv put secret/bazel/alpha/shared build_env=staging
-vault kv put secret/bazel/alpha/frontend_app api_key=alpha-key
-
-# Team Beta (Backend) - Entity: bazel-beta
-vault kv put secret/bazel/beta/shared build_env=production  
-vault kv put secret/bazel/beta/backend_api db_url=beta-db
-
-# Team Gamma (Data) - Entity: bazel-gamma
-vault kv put secret/bazel/gamma/shared build_env=testing
-vault kv put secret/bazel/gamma/ml_pipeline model_path=gamma-models
-```
+| Okta Group | Vault Role | Secret Access | Entity Management |
+|------------|------------|---------------|-------------------|
+| `mobile-developers` | `mobile-team` | `kv/dev/mobile/*` | Stable "mobile-team" entity |
+| `backend-developers` | `backend-team` | `kv/dev/backend/*` | Stable "backend-team" entity |
+| `frontend-developers` | `frontend-team` | `kv/dev/frontend/*` | Stable "frontend-team" entity |
+| `devops-team` | `devops-team` | All team secrets | Stable "devops-team" entity |
 
 ### Team Entity Benefits
 
-- **Logical Workload Grouping**: 1 entity per team (groups identical workloads efficiently)
-- **Security**: Teams cannot access other team's secrets or entities
-- **Audit**: Clear attribution of access by team and individual  
-- **Scalability**: Entity growth = O(teams) not O(developers)
+- **Stable Aliases**: Each team gets one consistent entity (e.g., "mobile-team")
+- **No Entity Churn**: Repeated authentications reuse the same team entity
+- **Shared Access**: All team members share the same entity for consistent permissions
+- **Metadata Alignment**: Entity aliases perfectly match vault role metadata
 
-## Production Considerations
+## 🧪 Testing
 
-### Team-Based Organizations
-
-1. **Use team-specific entity subjects**:
-   ```json
-   {"sub": "bazel-alpha"}   // Frontend team entity
-   {"sub": "bazel-beta"}    // Backend team entity  
-   {"sub": "bazel-gamma"}   // Data team entity
-   ```
-
-2. **Map identity providers to teams**:
-   - Okta group `frontend-team` → JWT `sub: "bazel-alpha"`
-   - LDAP group `CN=Backend,OU=Teams` → JWT `sub: "bazel-beta"`
-   - Results in 1 entity per team (logically groups identical workloads)
-
-3. **Implement proper key rotation**:
-   - Rotate JWT signing keys regularly
-   - Update Vault JWT auth configuration accordingly
-
-4. **Monitor entity growth**:
-   ```bash
-   # Check entity count periodically - should equal number of teams
-   vault list identity/entity/id | wc -l
-   ```
-
-5. **Team-Based Integration**:
-   - Integrate with CI/CD systems (Jenkins, GitHub Actions, etc.)
-   - Use Git/workspace metadata for team detection
-   - Automate team secret provisioning
-
-### Security Best Practices
-
-- **Secure key management**: Use proper HSMs or key management services
-- **Network security**: TLS termination and network policies  
-- **Team boundaries**: Ensure teams cannot escalate to other team contexts
-- **Audit logging**: Track all JWT exchanges and team context
-- **Monitoring**: Alert on unusual entity creation patterns
-- **Vault integration**: Proper Vault policies and auth methods
-
-## Troubleshooting
-
-### Environment Variable Issues
-
-**Missing `.env` file:**
 ```bash
-# Copy the template
-cp .env.example .env
-# Edit with your actual values
-vim .env
+# Run all tests with interactive menu
+./tests/run-tests.sh
+
+# Test specific components
+./tests/integration/test-okta-auth.sh      # OIDC authentication  
+./tests/integration/test-cli-tools.sh      # CLI tools validation
+./tests/integration/test-team-isolation.sh # Team access control
 ```
 
-**Wrong Vault token:**
-- Check that `VAULT_ROOT_TOKEN` in `.env` matches your Vault root token
-- Test Vault connection: `vault status` (with `VAULT_ADDR` set)
+## 📚 Documentation
 
-**Docker network issues:**
+- **[Complete Setup Guide](docs/SETUP.md)**: Step-by-step configuration instructions
+- **[Architecture Documentation](docs/ARCHITECTURE.md)**: System design and OIDC flow details
+- **[Development Guide](docs/DEVELOPMENT.md)**: Development and troubleshooting
+- **[Testing Guide](docs/TESTING.md)**: Comprehensive testing procedures
+
+## � Production Ready
+
+This system includes enterprise features for production deployment:
+- **PKCE Security**: Authorization Code Flow with Proof Key for Code Exchange
+- **Real User Identity**: Audit trails with actual user emails and team metadata
+- **Time-Limited Tokens**: Automatic expiration and usage limits
+- **Network Integration**: Works within existing Docker network infrastructure
+- **Scalable Architecture**: Stateless broker can be horizontally scaled
+
+For detailed production deployment instructions, see [docs/SETUP.md](docs/SETUP.md).
+- **Monitoring**: Implement health checks and monitoring for all components
+
+## 🔍 Troubleshooting
+
+### Common Issues
+
+1. **Okta Configuration**: Verify redirect URIs, client credentials, and group claims
+2. **Network Connectivity**: Ensure broker can reach both Okta and Vault
+3. **Group Membership**: Verify users are assigned to correct Okta groups
+4. **Token Expiration**: Check token TTLs and refresh flows
+
+### Debug Commands
+
 ```bash
-# Check Docker network connectivity
-docker network ls | grep jenkins
-# Ensure existing Vault is accessible
-docker exec broker curl -f $VAULT_ADDR/v1/sys/health
+# Check broker health
+curl http://localhost:8081/health
+
+# Check Vault JWT configuration
+vault auth list
+vault read auth/jwt/config
+
+# Test Okta connectivity (via broker)
+curl -s "https://${OKTA_DOMAIN}/.well-known/openid_configuration"
+
+# Verify team entities
+vault list identity/entity/id
+vault list identity/entity-alias/id
 ```
 
-### Broker Service Issues
+## 🏆 Enterprise Benefits
 
-**Broker won't start:**
-- Check that JSON key files exist in the broker directory
-- Verify Python dependencies are installed in Docker image
-- Ensure port 8081 is available: `lsof -i :8081`
-- Check Docker logs: `docker logs broker`
+### Compared to Direct OIDC Approach
 
-**Authentication failures:**
-- Verify `.env` file has correct `BROKER_URL`
-- Check team detection: `git config user.email` or set `TEAM` env var
-- Test broker health: `curl http://localhost:8081/.well-known/jwks.json`
+| Feature | Direct OIDC | Broker-Generated JWT |
+|---------|-------------|---------------------|
+| **Entity Management** | Individual user entities | Stable team entities |
+| **Entity Churn** | New entities per auth | Consistent entity reuse |
+| **Team Isolation** | User-based permissions | Team-based entity sharing |
+| **Multi-Team Users** | Complex group mappings | Clean team context selection |
+| **Token Source** | External OIDC provider | Broker-controlled JWTs |
+| **Alias Stability** | User-dependent aliases | Predictable team aliases |
+| **Scaling** | Entities scale with users | Entities scale with teams |
 
-### Vault Integration Issues
-- Verify `VAULT_ADDR` and `VAULT_ROOT_TOKEN` are set in `.env`
-- Check that JWT auth backend is enabled: `vault auth list`
-- Ensure JWKS URL is accessible from Vault
-- Test policy creation: Check Vault logs for policy template errors
+### Key Advantages
 
-### Docker Deployment Issues
+✅ **Stable Team Entities**: Consistent "mobile-team", "devops-team" entities with stable aliases  
+✅ **No Entity Churn**: Same entity reused across team authentications  
+✅ **Team Context Selection**: Clean interface for multi-team users  
+✅ **Predictable Access**: Team-based permissions with stable entity management  
+✅ **Enterprise Integration**: Works with existing Okta directory structure  
+✅ **RSA Security**: Broker-controlled JWT signing with secure key management  
 
-**Services won't start:**
-```bash
-# Check Docker Compose logs
-docker-compose logs broker
-docker-compose logs vault-setup
+## 📁 Repository Structure
 
-# Verify environment file
-docker-compose config
+```
+bazel-jwt-vault-demo/
+├── README.md                    # This file (updated for OIDC)
+├── docker-compose.yml          # OIDC-enabled services
+├── Dockerfile                  # Broker container
+├── .env                        # Okta OIDC configuration
+├── .env.example               # Configuration template
+├── .gitignore                 # Git ignore patterns
+├── MODULE.bazel               # Bazel configuration
+├──  bazelteam                 # Bazel team configuration
+│
+├── broker/                    # JWT broker implementation
+│   ├── app.py                # Team-based JWT broker with OIDC integration
+│   ├── gen_keys.py           # RSA key pair generation
+│   ├── jwt_signing_key       # RSA private key (generated)
+│   ├── jwt_signing_key.pub   # RSA public key (generated)
+│   ├── jwks.json            # JSON Web Key Set endpoint
+│   ├── signer_keys.json     # Key metadata for JWT signing
+│   ├── requirements.txt      # Python dependencies
+│   └── start.py              # Broker startup script
+│
+├── vault/                     # Vault JWT configuration
+│   └── setup.sh              # Vault setup for broker-based JWT auth
+│
+├── client/                    # Client simulation tools
+│   └── build_sim.sh          # Build simulation
+│
+├── tests/                     # Test suites (NEW)
+│   ├── run-tests.sh          # Test runner menu
+│   ├── integration/          # Integration tests
+│   │   ├── test-okta-auth.sh        # OIDC authentication test
+│   │   ├── test-team-isolation.sh   # Team access control test
+│   │   ├── test-user-identity.sh    # User identity test
+│   │   └── test-full-workflow.sh    # Comprehensive test suite
+│   └── scripts/              # Test utilities
+│       └── verify-team-entities.sh
+│
+├── scripts/                   # Utility scripts
+│   ├── start-broker.sh       # Broker startup (updated for JWT generation)
+│   └── docker-setup.sh       # Docker environment setup
+│
+└── docs/                      # Documentation
+    ├── ARCHITECTURE.md        # System architecture
+    ├── DEVELOPMENT.md         # Development guide
+    ├── SETUP.md              # Complete setup guide
+    └── TESTING.md            # Testing procedures
 ```
 
-**Network connectivity:**
-```bash
-# Test external Vault connection (if using existing Vault)
-docker run --rm --network jenkins-vault-poc_default curlimages/curl:latest \
-  curl -f http://vault:8200/v1/sys/health
+## 📄 License
 
-# Check if broker is accessible
-curl http://localhost:8081/.well-known/jwks.json
-```
+MIT License - see LICENSE file for details.
 
-### Entity Verification Issues
+## 🤝 Contributing
 
-**Entity sharing not working:**
-```bash
-# Check verification script output
-./verify_entity_sharing.sh
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Submit a pull request
 
-# Look for:
-# - Different teams should have different entity IDs
-# - Same team members should have identical entity IDs
-# - Individual user metadata should be preserved
-```
+## 📞 Support
 
-## License
+- **Issues**: [GitHub Issues](https://github.com/trenner1/bazel-jwt-vault-demo/issues)
+- **Documentation**: Check the `docs/` directory
+- **Testing**: Use the comprehensive test suite in `tests/`
 
-This is a demonstration project for educational purposes.
+---
+
+*Built with ❤️ for enterprise teams who want secure, automated, team-based authentication with stable entity management.*
