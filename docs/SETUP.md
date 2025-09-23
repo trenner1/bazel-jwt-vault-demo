@@ -155,10 +155,10 @@ This creates:
 - `broker/jwt_public_key.pem` - Public key in PEM format
 
 **Important Security Notes:**
-- ⚠️ **Never commit private keys to version control**
-- 🔒 Private key is used by broker to sign JWT tokens
-- 🔓 Public key is used by Vault to verify JWT signatures
-- 🏭 For production, use proper key management solutions
+- **Never commit private keys to version control**
+- Private key is used by broker to sign JWT tokens
+- Public key is used by Vault to verify JWT signatures
+- For production, use proper key management solutions
 
 #### Regenerating JWT Keys
 
@@ -179,7 +179,7 @@ docker-compose up -d broker
 ./tools/bazel-auth-simple --help
 ```
 
-**⚠️ Key Rotation Impact:**
+**Key Rotation Impact:**
 - All existing JWT tokens become invalid immediately
 - Users will need to re-authenticate after key rotation
 - This is a disruptive operation - plan accordingly
