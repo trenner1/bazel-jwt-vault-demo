@@ -340,15 +340,18 @@ bazel-jwt-vault-demo/
 │   ├── requirements.txt             # Python dependencies
 │   └── start.py                     # Broker startup script
 │
-├── vault/                           # Vault JWT configuration
-│   └── setup.sh                     # Vault setup for broker-based JWT auth
+├── docs/                            # Documentation
+│   ├── ARCHITECTURE.md              # System architecture
+│   ├── DEVELOPMENT.md               # Development guide
+│   ├── SETUP.md                     # Complete setup guide
+│   └── TESTING.md                   # Testing procedures
 │
-├── tools/                           # CLI authentication tools
-│   ├── README.md                    # Tool documentation
-│   ├── bazel-auth-simple            # Zero-dependency CLI tool (recommended)
-│   ├── bazel-auth                   # Python-based authentication tool
-│   ├── bazel-build                  # Bazel wrapper with auto-auth
-│   └── requirements.txt             # Python dependencies for bazel-auth
+├── examples/                        # Usage examples
+│   └── bazel_auth_example.py        # Python authentication example
+│
+├── scripts/                         # Utility scripts
+│   ├── start-broker.sh              # Broker startup (updated for JWT generation)
+│   └── docker-setup.sh              # Docker environment setup
 │
 ├── tests/                           # Test suites
 │   ├── run-tests.sh                 # Test runner menu
@@ -360,18 +363,15 @@ bazel-jwt-vault-demo/
 │   └── scripts/                     # Test utilities
 │       └── verify-team-entities.sh  # Team entity verification script
 │
-├── examples/                        # Usage examples
-│   └── bazel_auth_example.py        # Python authentication example
+├── tools/                           # CLI authentication tools
+│   ├── README.md                    # Tool documentation
+│   ├── bazel-auth-simple            # Zero-dependency CLI tool (recommended)
+│   ├── bazel-auth                   # Python-based authentication tool
+│   ├── bazel-build                  # Bazel wrapper with auto-auth
+│   └── requirements.txt             # Python dependencies for bazel-auth
 │
-├── scripts/                         # Utility scripts
-│   ├── start-broker.sh              # Broker startup (updated for JWT generation)
-│   └── docker-setup.sh              # Docker environment setup
-│
-└── docs/                            # Documentation
-    ├── ARCHITECTURE.md              # System architecture
-    ├── DEVELOPMENT.md               # Development guide
-    ├── SETUP.md                     # Complete setup guide
-    └── TESTING.md                   # Testing procedures
+└── vault/                           # Vault JWT configuration
+    └── setup.sh                     # Vault setup for broker-based JWT auth
 ```
 
 ##  License
