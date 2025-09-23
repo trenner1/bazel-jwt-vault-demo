@@ -256,7 +256,7 @@ Teams are automatically assigned based on Okta group membership. Users with mult
 - **[Development Guide](docs/DEVELOPMENT.md)**: Development and troubleshooting
 - **[Testing Guide](docs/TESTING.md)**: Comprehensive testing procedures
 
-## � Production Ready
+##  Production Ready
 
 This system includes enterprise features for production deployment:
 - **PKCE Security**: Authorization Code Flow with Proof Key for Code Exchange
