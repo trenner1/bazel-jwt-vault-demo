@@ -68,7 +68,7 @@ echo "Client ID: $OKTA_CLIENT_ID (for broker authentication)"
 
 # 1) Enable KV v2 secrets engine
 echo " Enabling KV v2 secrets engine..."
-vault secrets enable -version=2 -path=kv kv || echo "KV engine already enabled"
+vault secrets enable -version=2 -path=kv kv 2>/dev/null || echo "KV engine already enabled"
 
 # 2) Create team-specific policies for fine-grained access control
 echo " Creating team-specific policies..."
@@ -224,14 +224,26 @@ echo "   Legacy paths: kv/dev/apps/team-*-pipeline/* (backward compatibility)"
 echo " Configuring broker-based JWT authentication..."
 
 # Enable JWT auth method
-vault auth enable jwt || echo "JWT auth method already enabled"
+vault auth enable jwt 2>/dev/null || echo "JWT auth method already enabled"
 
 # Configure JWT auth to use broker's public key for token verification
 # The broker generates RSA-signed JWTs with team names as subjects
+
+# Get the path to the JWT public key
+JWT_PUBLIC_KEY_PATH=""
+if [[ -f "broker/jwt_signing_key.pub" ]]; then
+    JWT_PUBLIC_KEY_PATH="broker/jwt_signing_key.pub"
+elif [[ -f "../broker/jwt_signing_key.pub" ]]; then
+    JWT_PUBLIC_KEY_PATH="../broker/jwt_signing_key.pub"
+else
+    echo "Error: JWT public key not found. Please run ./scripts/generate-jwt-keys.sh first"
+    exit 1
+fi
+
+echo "Using JWT public key from: $JWT_PUBLIC_KEY_PATH"
 vault write auth/jwt/config \
-  jwks_url="http://bazel-broker:8081/jwks" \
-  bound_issuer="bazel-broker" \
-  jwt_validation_pubkeys=@/app/jwt_signing_key.pub
+  bound_issuer="bazel-auth-broker" \
+  jwt_validation_pubkeys=@${JWT_PUBLIC_KEY_PATH}
 
 # 5) Create team-specific JWT roles
 echo " Configuring team-specific JWT roles..."
@@ -290,7 +302,7 @@ vault write auth/jwt/role/base-team \
 
 # 6) Enable identity secrets engine for team-based entity management
 echo " Configuring identity management for team-based entities..."
-vault secrets enable -path=identity identity || echo "Identity engine already enabled"
+vault secrets enable -path=identity identity 2>/dev/null || echo "Identity engine already enabled"
 
 # 7) Create identity groups for team-based access control
 echo " Creating identity groups (entities will be created dynamically by broker authentication)..."

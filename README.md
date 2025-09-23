@@ -135,8 +135,13 @@ sequenceDiagram
 # Clone and configure
 git clone https://github.com/trenner1/bazel-jwt-vault-demo.git
 cd bazel-jwt-vault-demo
-cp broker/.env.example broker/.env
-# Edit broker/.env with your Okta details (see docs/SETUP.md for details)
+
+# Generate JWT signing keys
+./scripts/generate-jwt-keys.sh
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your Okta details (see docs/SETUP.md for details)
 ```
 
 ### 2. Run

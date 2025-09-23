@@ -23,9 +23,12 @@ For immediate setup with default configuration:
 git clone https://github.com/trenner1/bazel-jwt-vault-demo.git
 cd bazel-jwt-vault-demo
 
+# Generate JWT signing keys
+./scripts/generate-jwt-keys.sh
+
 # Configure environment
-cp broker/.env.example broker/.env
-# Edit broker/.env with your Okta details
+cp .env.example .env
+# Edit .env with your Okta details
 
 # Start services
 docker-compose up -d
@@ -136,6 +139,50 @@ Essential environment variables for deployment:
 | `OKTA_REDIRECT_URI` | Callback URL | `http://localhost:8081/auth/callback` |
 | `VAULT_ADDR` | Vault server address | `http://vault:8200` |
 | `VAULT_ROOT_TOKEN` | Vault root token | `hvs.ABC123...` |
+
+### JWT Key Pair Generation
+
+The broker requires RSA key pairs for JWT token signing and verification:
+
+```bash
+# Generate RSA key pair for JWT signing
+./scripts/generate-jwt-keys.sh
+```
+
+This creates:
+- `broker/jwt_signing_key` - Private key for token signing (keep secure!)
+- `broker/jwt_signing_key.pub` - Public key for token verification  
+- `broker/jwt_public_key.pem` - Public key in PEM format
+
+**Important Security Notes:**
+- ⚠️ **Never commit private keys to version control**
+- 🔒 Private key is used by broker to sign JWT tokens
+- 🔓 Public key is used by Vault to verify JWT signatures
+- 🏭 For production, use proper key management solutions
+
+#### Regenerating JWT Keys
+
+If you need to regenerate the JWT keys (for security rotation or if keys are compromised):
+
+```bash
+# 1. Generate new key pair
+./scripts/generate-jwt-keys.sh
+
+# 2. Rebuild broker container with new keys
+docker-compose build broker
+docker-compose up -d broker
+
+# 3. Update Vault with new public key
+./vault/setup.sh
+
+# 4. Verify the system is working
+./tools/bazel-auth-simple --help
+```
+
+**⚠️ Key Rotation Impact:**
+- All existing JWT tokens become invalid immediately
+- Users will need to re-authenticate after key rotation
+- This is a disruptive operation - plan accordingly
 
 ##  Docker Deployment
 
@@ -368,7 +415,30 @@ ls -la tools/bazel-auth-simple
 curl -X POST http://localhost:5000/cli/start
 ```
 
-#### 3. Team Access Issues
+#### 3. JWT Authentication Failures
+
+If authentication fails with JWT-related errors:
+
+```bash
+# Check if JWT keys exist
+ls -la broker/jwt_signing_key*
+
+# Verify keys in container match host
+docker exec bazel-broker ls -la /app/jwt_signing_key*
+
+# If keys are missing or mismatched, regenerate and update:
+./scripts/generate-jwt-keys.sh
+docker-compose build broker
+docker-compose up -d broker
+./vault/setup.sh
+```
+
+**Common JWT errors:**
+- `signature verification failed` → Key mismatch between broker and Vault
+- `issuer does not match` → Check issuer configuration in JWT and Vault
+- `token expired` → Normal - tokens expire after 2 hours
+
+#### 4. Team Access Issues
 
 ```bash
 # Check Okta groups
@@ -380,7 +450,7 @@ vault auth -method=token token=YOUR_TOKEN
 vault token lookup -self
 ```
 
-#### 4. Vault Connection Issues
+#### 5. Vault Connection Issues
 
 ```bash
 # Check Vault health
