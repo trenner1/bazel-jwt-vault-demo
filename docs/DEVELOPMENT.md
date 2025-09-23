@@ -5,7 +5,6 @@ This guide provides comprehensive information for developers working on the Ente
 ##  Table of Contents
 
 - [Development Environment Setup](#development-environment-setup)
-- [Project Structure](#project-structure)
 - [Development Workflow](#development-workflow)
 - [Code Standards](#code-standards)
 - [Testing Guidelines](#testing-guidelines)
@@ -83,49 +82,6 @@ This guide provides comprehensive information for developers working on the Ente
 - Enable Docker Compose integration
 - Set up pytest as test runner
 - Configure Black as code formatter
-
-##  Project Structure
-
-```
-```
-bazel-jwt-vault-demo/
-├── broker/                    # OIDC authentication broker
-│   ├── app.py                # Main Flask application with PKCE
-│   ├── requirements.txt      # Python dependencies
-│   └── .env.example         # Environment template
-├── client/                   # Legacy client (reference only)
-└── docs/                     # Documentation
-    ├── ARCHITECTURE.md      # System design
-    ├── DEVELOPMENT.md       # This file
-    ├── SETUP.md            # Complete setup guide
-    └── TESTING.md           # Testing guide
-```
-├── docs/                      # Documentation
-│   ├── ARCHITECTURE.md       # System architecture
-│   ├── DEVELOPMENT.md        # This file
-│   ├── SETUP.md             # Complete setup guide
-│   └── TESTING.md           # Testing procedures
-├── scripts/                   # Utility scripts
-└── docker-compose.yml        # Development containers
-```
-
-### Key Components
-
-#### Broker Application (`broker/app.py`)
-- **FastAPI Framework**: Modern async web framework
-- **OIDC Integration**: Okta authentication flow
-- **Session Management**: Secure session handling
-- **Vault Integration**: Token exchange and secret access
-
-#### Vault Configuration (`vault/setup.sh`)
-- **OIDC Auth Method**: Configures Vault for Okta
-- **Team Policies**: Creates team-specific policies
-- **Identity Management**: Sets up groups and entities
-
-#### Test Framework (`tests/`)
-- **Integration Tests**: End-to-end OIDC flows
-- **Team Isolation**: Verifies access control
-- **User Identity**: Tests individual user tracking
 
 ##  Development Workflow
 
