@@ -54,11 +54,11 @@ This guide provides comprehensive information for developers working on the Ente
    # Build development containers
    docker-compose build
    
-   # Start services
+   # Start broker service
    docker-compose up -d
    
-   # Configure Vault
-   docker-compose run --rm vault-setup
+   # Configure Vault (requires external Vault instance)
+   ./vault/setup.sh
    ```
 
 ### IDE Configuration
