@@ -112,14 +112,12 @@ Create and configure `broker/.env`:
 # Okta OIDC Configuration
 OKTA_DOMAIN=your-domain.okta.com
 OKTA_CLIENT_ID=0oa1a2b3c4d5e6f7g8h9
+OKTA_CLIENT_SECRET=your-client-secret-here
+OKTA_REDIRECT_URI=http://localhost:8081/auth/callback
 
 # Vault Configuration  
 VAULT_ADDR=http://vault:8200
-VAULT_OIDC_MOUNT_PATH=oidc
-
-# Security Settings
-FLASK_SECRET_KEY=your-super-secret-key-here
-SESSION_TIMEOUT=3600
+VAULT_ROOT_TOKEN=your-vault-root-token
 
 # Development Settings (optional)
 DEBUG=false
@@ -134,10 +132,12 @@ Essential environment variables for deployment:
 |----------|-------------|---------|
 | `OKTA_DOMAIN` | Your Okta domain | `dev-123456.okta.com` |
 | `OKTA_CLIENT_ID` | Application client ID | `0oa1a2b3c4d5e6f7g8h9` |
+| `OKTA_CLIENT_SECRET` | Application client secret | `your-secret-here` |
+| `OKTA_REDIRECT_URI` | Callback URL | `http://localhost:8081/auth/callback` |
 | `VAULT_ADDR` | Vault server address | `http://vault:8200` |
-| `FLASK_SECRET_KEY` | Session encryption key | `generate-secure-key` |
+| `VAULT_ROOT_TOKEN` | Vault root token | `hvs.ABC123...` |
 
-## 🐳 Docker Deployment
+##  Docker Deployment
 
 ### Development Deployment
 
@@ -167,7 +167,7 @@ services:
 
 | Service | Port | Purpose |
 |---------|------|---------|
-| Broker | 5000 | OIDC authentication & callback |
+| Broker | 8081 | OIDC authentication & callback |
 | Vault | 8200 | Secret management & token validation |
 
 ## CLI Tools Setup
@@ -329,9 +329,11 @@ curl -X POST http://localhost:5000/cli/start
 ```bash
 # Production-specific configuration
 OKTA_DOMAIN=company.okta.com
+OKTA_CLIENT_ID=production-client-id
+OKTA_CLIENT_SECRET=production-client-secret
+OKTA_REDIRECT_URI=https://vault-broker.company.com/auth/callback
 VAULT_ADDR=https://vault.company.com:8200
-FLASK_SECRET_KEY=production-secret-key-256-bits
-SESSION_TIMEOUT=1800
+VAULT_ROOT_TOKEN=production-vault-token
 HTTPS_ONLY=true
 ```
 
