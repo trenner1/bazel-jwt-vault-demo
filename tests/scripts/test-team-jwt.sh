@@ -7,11 +7,11 @@ set -euo pipefail
 export VAULT_ADDR=http://localhost:8200
 export VAULT_TOKEN=${VAULT_TOKEN:-"your-vault-root-token-here"}
 
-echo "🧪 TESTING TEAM-BASED ENTITY CREATION WITH BROKER JWTs"
+echo " TESTING TEAM-BASED ENTITY CREATION WITH BROKER JWTs"
 echo "======================================================"
 echo
 
-echo "📊 Initial state:"
+echo " Initial state:"
 INITIAL_ENTITIES=$(vault list -format=json identity/entity/id 2>/dev/null | jq -r 'length // 0')
 echo "   Entities: $INITIAL_ENTITIES"
 echo
@@ -23,7 +23,7 @@ test_team_jwt_auth() {
     local name="$3"
     local description="$4"
     
-    echo "🔐 Testing: $description"
+    echo " Testing: $description"
     echo "   Email: $email"
     echo "   Name: $name"
     echo "   Team: $team"
@@ -43,7 +43,7 @@ EOF
     echo "   📤 Simulating broker exchange request..."
     # Note: In a real test, we'd need a valid session_id from Okta auth
     # For now, let's check if the broker is generating the right team-based JWTs
-    echo "   ⚠️  This would generate a team-based JWT with subject: $team"
+    echo "   This would generate a team-based JWT with subject: $team"
     echo
 }
 
@@ -59,20 +59,20 @@ echo "--------------------------------------"
 
 test_team_jwt_auth "backend-team" "dave@company.com" "Dave Wilson" "Dave from backend team"
 
-echo "📊 Expected Results:"
-echo "   ✅ All mobile team members would share entity: mobile-team"
-echo "   ✅ Backend team member would get separate entity: backend-team"
-echo "   ✅ User metadata stored in child tokens, not entities"
+echo " Expected Results:"
+echo "    All mobile team members would share entity: mobile-team"
+echo "    Backend team member would get separate entity: backend-team"
+echo "    User metadata stored in child tokens, not entities"
 echo "   💰 Result: 2 entities total (1 per team) vs 4 entities (1 per user)"
 echo
 
-echo "🔍 Let's verify the JWT configuration is correct:"
+echo " Let's verify the JWT configuration is correct:"
 vault read auth/jwt/config
 echo
 
-echo "🔍 Check mobile-team role configuration:"
+echo " Check mobile-team role configuration:"
 vault read auth/jwt/role/mobile-team | grep -E "(user_claim|role_type|policies)"
 
 echo
 echo "✨ Team-based entity configuration ready!"
-echo "📋 Next: Complete Okta authentication flow to see entities created per team"
+echo " Next: Complete Okta authentication flow to see entities created per team"

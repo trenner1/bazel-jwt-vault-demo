@@ -4,7 +4,7 @@ set -euo pipefail
 # User Identity and Entity Management Test for Okta OIDC
 # This script tests user-specific identity management and metadata tracking with OIDC
 
-echo "👤 Testing Okta OIDC User Identity & Entity Management"
+echo " Testing Okta OIDC User Identity & Entity Management"
 echo "====================================================="
 
 # Configuration
@@ -21,11 +21,11 @@ NC='\033[0m' # No Color
 
 # Helper functions
 log_success() {
-    echo -e "${GREEN}✅ $1${NC}"
+    echo -e "${GREEN} $1${NC}"
 }
 
 log_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
+    echo -e "${YELLOW}$1${NC}"
 }
 
 log_error() {
@@ -33,11 +33,11 @@ log_error() {
 }
 
 log_info() {
-    echo -e "${BLUE}📋 $1${NC}"
+    echo -e "${BLUE} $1${NC}"
 }
 
 log_user() {
-    echo -e "${PURPLE}👤 $1${NC}"
+    echo -e "${PURPLE} $1${NC}"
 }
 
 # Test setup verification
@@ -70,10 +70,10 @@ echo "-----------------------------------"
 
 echo "Expected user identity tracking features:"
 echo "  📧 Email-based user identification"
-echo "  👥 Okta group membership in metadata"
-echo "  🏷️  User-specific secret paths"
-echo "  🔄 Entity reuse for same user across sessions"
-echo "  🛡️  Team-based policy inheritance"
+echo "   Okta group membership in metadata"
+echo "   User-specific secret paths"
+echo "   Entity reuse for same user across sessions"
+echo "   Team-based policy inheritance"
 
 # Function to test user identity extraction
 test_user_identity() {
@@ -162,7 +162,7 @@ test_user_specific_secrets() {
     local user_email="$2"
     
     echo
-    echo "   🔍 Testing user-specific secret access..."
+    echo "    Testing user-specific secret access..."
     
     # Extract username from email for path construction
     local username=$(echo "$user_email" | cut -d'@' -f1)
@@ -233,12 +233,12 @@ test_entity_reuse() {
             log_success "Entity reuse confirmed: Same entity ID"
             echo "   First auth:  $first_entity_id"
             echo "   Second auth: $second_entity_id"
-            echo "   ✅ NO ENTITY CHURN - Entity properly reused"
+            echo "    NO ENTITY CHURN - Entity properly reused"
         else
             log_warning "Entity churn detected: Different entity IDs"
             echo "   First auth:  $first_entity_id"
             echo "   Second auth: $second_entity_id"
-            echo "   ⚠️  This may indicate OIDC configuration issues"
+            echo "   This may indicate OIDC configuration issues"
         fi
     else
         log_warning "Could not compare entity IDs (one or both empty)"
@@ -296,7 +296,7 @@ if [[ "$RUN_TESTS" =~ ^[Yy]$ ]]; then
                     log_success "User separation confirmed: Different entity IDs"
                     echo "   User 1 entity: $ENTITY_ID_1"
                     echo "   User 2 entity: $ENTITY_ID_3"
-                    echo "   ✅ PROPER USER ISOLATION"
+                    echo "    PROPER USER ISOLATION"
                 else
                     log_warning "Entity collision: Same entity ID for different users"
                     echo "   This may indicate OIDC configuration issues"
@@ -321,24 +321,24 @@ log_success "Metadata preservation across authentication chain"
 
 # Summary
 echo
-echo "🎯 USER IDENTITY TEST SUMMARY"
+echo " USER IDENTITY TEST SUMMARY"
 echo "============================="
 log_success "Okta OIDC user identity integration verified"
 log_success "User-specific metadata tracking implemented"
 log_success "Entity reuse prevents authentication overhead"
 log_success "User separation maintains security boundaries"
 echo
-echo "👤 Identity Features:"
+echo " Identity Features:"
 echo "   📧 Email-based user identification"
-echo "   🏷️  User-specific secret paths: kv/dev/users/{email}/*"
-echo "   👥 Team assignment via Okta groups"
-echo "   🔄 Entity reuse for same user sessions"
-echo "   🛡️  Metadata includes user, team, groups, pipeline info"
+echo "   User-specific secret paths: kv/dev/users/{email}/*"
+echo "    Team assignment via Okta groups"
+echo "    Entity reuse for same user sessions"
+echo "   Metadata includes user, team, groups, pipeline info"
 echo
-echo "🏗️ Enterprise Benefits:"
-echo "   ✅ Real user identity (not anonymous tokens)"
-echo "   ✅ Audit trail with actual user information"
-echo "   ✅ User-specific secret isolation"
-echo "   ✅ Team membership automatically determined"
-echo "   ✅ OIDC standard compliance"
-echo "   ✅ Integration with existing identity provider"
+echo "Enterprise Benefits:"
+echo "    Real user identity (not anonymous tokens)"
+echo "    Audit trail with actual user information"
+echo "    User-specific secret isolation"
+echo "    Team membership automatically determined"
+echo "    OIDC standard compliance"
+echo "    Integration with existing identity provider"

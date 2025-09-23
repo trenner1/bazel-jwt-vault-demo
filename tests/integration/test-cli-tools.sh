@@ -24,7 +24,7 @@ log_success() {
 }
 
 log_warning() {
-    echo -e "${YELLOW}⚠${NC} $1"
+    echo -e "${YELLOW}${NC} $1"
 }
 
 log_error() {
@@ -38,7 +38,7 @@ TOOLS_DIR="$PROJECT_ROOT/tools"
 BROKER_URL="${BROKER_URL:-http://localhost:5000}"
 VAULT_URL="${VAULT_URL:-http://localhost:8200}"
 
-echo "🛠️  CLI TOOLS AUTHENTICATION TEST"
+echo "CLI TOOLS AUTHENTICATION TEST"
 echo "================================="
 echo "Testing CLI tools for OIDC authentication with PKCE"
 echo "Project root: $PROJECT_ROOT"
@@ -308,7 +308,7 @@ log_success "Manual authentication flow documented"
 
 # Summary
 echo
-echo "🎉 CLI TOOLS TEST COMPLETE"
+echo " CLI TOOLS TEST COMPLETE"
 echo "=========================="
 
 if [[ -x "bazel-auth-simple" ]]; then
@@ -330,12 +330,12 @@ else
 fi
 
 echo
-echo "🔧 Recommended usage:"
+echo " Recommended usage:"
 echo "   ./tools/bazel-auth-simple  # Zero dependencies, fastest"
 echo "   ./tools/bazel-auth         # Python-based, more features"
 echo "   ./tools/bazel-build        # Wrapper for Bazel commands"
 echo
-echo "🔐 All tools support:"
+echo " All tools support:"
 echo "   - PKCE authentication flow"
 echo "   - Session ID-based token exchange"  
 echo "   - Team-based access control"

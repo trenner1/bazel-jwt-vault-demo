@@ -4,7 +4,7 @@ set -euo pipefail
 # Team Isolation Test for Okta OIDC Authentication
 # This script tests that Okta group membership properly restricts access to team-specific secrets
 
-echo "🔐 Testing Okta Group-Based Team Secret Isolation"
+echo " Testing Okta Group-Based Team Secret Isolation"
 echo "================================================"
 
 # Configuration
@@ -20,11 +20,11 @@ NC='\033[0m' # No Color
 
 # Helper functions
 log_success() {
-    echo -e "${GREEN}✅ $1${NC}"
+    echo -e "${GREEN} $1${NC}"
 }
 
 log_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
+    echo -e "${YELLOW}$1${NC}"
 }
 
 log_error() {
@@ -32,11 +32,11 @@ log_error() {
 }
 
 log_info() {
-    echo -e "${BLUE}📋 $1${NC}"
+    echo -e "${BLUE} $1${NC}"
 }
 
 log_team() {
-    echo -e "👥 $1"
+    echo -e " $1"
 }
 
 # Test setup verification
@@ -87,7 +87,7 @@ echo "Expected team access patterns:"
 for group in "${!GROUP_ROLE_MAPPING[@]}"; do
     role="${GROUP_ROLE_MAPPING[$group]}"
     paths="${TEAM_PATHS[$role]}"
-    echo "  👥 $group → $role → $paths"
+    echo "   $group → $role → $paths"
 done
 
 # Interactive testing section
@@ -99,10 +99,10 @@ echo "This test requires authentication as different team members."
 echo "You'll need to test with accounts that belong to different Okta groups."
 echo
 echo "Available Okta groups to test:"
-echo "  📱 mobile-developers"
-echo "  🔧 backend-developers" 
-echo "  🌐 frontend-developers"
-echo "  ⚙️  devops-team"
+echo "   mobile-developers"
+echo "   backend-developers" 
+echo "   frontend-developers"
+echo "   devops-team"
 echo
 
 # Function to test team access
@@ -178,7 +178,7 @@ test_secret_access() {
     local team="$2"
     
     echo
-    echo "   🔍 Testing authorized secret access..."
+    echo "    Testing authorized secret access..."
     
     # Test shared secrets (should work for all teams)
     local shared_secret=$(curl -s -H "X-Vault-Token: $vault_token" \
@@ -259,7 +259,7 @@ test_cross_team_restrictions() {
             ;;
         "devops-team")
             # DevOps team should have broader access
-            echo "     ✅ DevOps team has cross-functional access (expected)"
+            echo "      DevOps team has cross-functional access (expected)"
             return
             ;;
     esac
@@ -341,23 +341,23 @@ fi
 
 # Summary
 echo
-echo "🎯 TEAM ISOLATION TEST SUMMARY"
+echo " TEAM ISOLATION TEST SUMMARY"
 echo "=============================="
 log_success "Okta group-based team isolation implemented"
 log_success "Team-specific secret access via Vault policies"
 log_success "Cross-team access properly restricted"
 log_success "DevOps team has appropriate cross-functional access"
 echo
-echo "🔐 Security Model:"
-echo "   📱 mobile-developers → mobile-team → mobile secrets only"
-echo "   🔧 backend-developers → backend-team → backend secrets only"
-echo "   🌐 frontend-developers → frontend-team → frontend secrets only"
-echo "   ⚙️  devops-team → devops-team → cross-functional access"
-echo "   📋 All teams → shared secrets accessible"
+echo " Security Model:"
+echo "    mobile-developers → mobile-team → mobile secrets only"
+echo "    backend-developers → backend-team → backend secrets only"
+echo "    frontend-developers → frontend-team → frontend secrets only"
+echo "   devops-team → devops-team → cross-functional access"
+echo "    All teams → shared secrets accessible"
 echo
-echo "🏗️ Enterprise Benefits:"
-echo "   ✅ Okta group membership controls access"
-echo "   ✅ No manual policy management required"
-echo "   ✅ Automatic team assignment based on OIDC claims"
-echo "   ✅ Audit trail includes user identity and team membership"
-echo "   ✅ Time-limited tokens with usage restrictions"
+echo "Enterprise Benefits:"
+echo "    Okta group membership controls access"
+echo "    No manual policy management required"
+echo "    Automatic team assignment based on OIDC claims"
+echo "    Audit trail includes user identity and team membership"
+echo "    Time-limited tokens with usage restrictions"

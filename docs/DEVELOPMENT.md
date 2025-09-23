@@ -1,8 +1,8 @@
-# 🛠️ Development Guide
+# Development Guide
 
 This guide provides comprehensive information for developers working on the Enterprise OIDC Vault Demo project.
 
-## 📋 Table of Contents
+##  Table of Contents
 
 - [Development Environment Setup](#development-environment-setup)
 - [Project Structure](#project-structure)
@@ -12,7 +12,7 @@ This guide provides comprehensive information for developers working on the Ente
 - [Debugging](#debugging)
 - [Contributing](#contributing)
 
-## 🏗️ Development Environment Setup
+## Development Environment Setup
 
 ### Prerequisites
 
@@ -84,7 +84,7 @@ This guide provides comprehensive information for developers working on the Ente
 - Set up pytest as test runner
 - Configure Black as code formatter
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 ```
@@ -127,7 +127,7 @@ bazel-jwt-vault-demo/
 - **Team Isolation**: Verifies access control
 - **User Identity**: Tests individual user tracking
 
-## 🔄 Development Workflow
+##  Development Workflow
 
 ### Feature Development
 
@@ -177,7 +177,7 @@ bazel-jwt-vault-demo/
 3. **Tag Release**: Create git tag with semantic versioning
 4. **Deploy**: Automated deployment to staging/production
 
-## 📝 Code Standards
+##  Code Standards
 
 ### Python Style Guide
 
@@ -295,7 +295,7 @@ class Settings(BaseSettings):
 settings = Settings()
 ```
 
-## 🧪 Testing Guidelines
+##  Testing Guidelines
 
 ### Unit Testing
 
@@ -349,20 +349,20 @@ echo "Testing Okta OIDC authentication..."
 # Check broker health
 response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8081/health)
 if [ "$response" != "200" ]; then
-    echo "❌ Broker health check failed"
+    echo " Broker health check failed"
     exit 1
 fi
 
-echo "✅ Broker health check passed"
+echo " Broker health check passed"
 
 # Test authentication endpoint
 auth_url=$(curl -s http://localhost:8081/auth/url | jq -r '.auth_url')
 if [[ "$auth_url" != *"okta.com"* ]]; then
-    echo "❌ Okta auth URL not properly configured"
+    echo " Okta auth URL not properly configured"
     exit 1
 fi
 
-echo "✅ Okta authentication URL configured correctly"
+echo " Okta authentication URL configured correctly"
 ```
 
 ### Test Data Management
@@ -394,7 +394,7 @@ def sample_user_session():
     }
 ```
 
-## �️ CLI Tools Development
+## � CLI Tools Development
 
 ### Tool Architecture
 
@@ -583,7 +583,7 @@ async def debug_session(request: Request):
     }
 ```
 
-## 🤝 Contributing
+##  Contributing
 
 ### Pull Request Guidelines
 
@@ -621,7 +621,7 @@ async def debug_session(request: Request):
 - **User Documentation**: Update README and guides as needed
 - **Architecture Documentation**: Update for significant changes
 
-## 📚 Additional Resources
+##  Additional Resources
 
 ### Development Tools
 - [FastAPI Documentation](https://fastapi.tiangolo.com/)

@@ -4,7 +4,7 @@ set -euo pipefail
 # Comprehensive test of Okta OIDC authentication flow
 # This script tests the enterprise OIDC authentication with team-based access control
 
-echo "🔐 Testing Okta OIDC Authentication Flow"
+echo " Testing Okta OIDC Authentication Flow"
 echo "========================================"
 
 # Configuration
@@ -19,11 +19,11 @@ NC='\033[0m' # No Color
 
 # Helper functions
 log_success() {
-    echo -e "${GREEN}✅ $1${NC}"
+    echo -e "${GREEN} $1${NC}"
 }
 
 log_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
+    echo -e "${YELLOW}$1${NC}"
 }
 
 log_error() {
@@ -32,7 +32,7 @@ log_error() {
 }
 
 log_info() {
-    echo -e "📋 $1"
+    echo -e " $1"
 }
 
 # Test 1: Verify broker health and Okta configuration
@@ -295,7 +295,7 @@ log_success "Time-limited tokens with usage restrictions"
 
 # Summary
 echo
-echo "🎉 OIDC AUTHENTICATION WITH PKCE TEST COMPLETE"
+echo " OIDC AUTHENTICATION WITH PKCE TEST COMPLETE"
 echo "=============================================="
 log_success "PKCE authentication flow verified!"
 log_success "CLI tools functioning (bazel-auth-simple recommended)"
@@ -304,7 +304,7 @@ log_success "Team-based access control via Okta groups"
 log_success "Secure session management implemented"
 log_success "Vault integration with OIDC working"
 echo
-echo "🔧 Usage for teams:"
+echo " Usage for teams:"
 echo "   1. Use CLI: ./tools/bazel-auth-simple (zero dependencies)"
 echo "   2. Or browser: $BROKER_URL for enhanced callback page"
 echo "   3. Login with Okta credentials (PKCE flow)"
@@ -312,12 +312,12 @@ echo "   4. Copy session_id from enhanced callback"
 echo "   5. Exchange session for team-scoped Vault tokens"
 echo "   6. Access team-specific secrets in Vault"
 echo
-echo "📚 CLI Tools Available:"
+echo " CLI Tools Available:"
 echo "   - ./tools/bazel-auth-simple → Zero dependencies, recommended"
 echo "   - ./tools/bazel-auth → Python-based with advanced features"
 echo "   - ./tools/bazel-build → Wrapper for Bazel with auth"
 echo
-echo "🔐 Enhanced Security Features:"
+echo " Enhanced Security Features:"
 echo "   - PKCE (Proof Key for Code Exchange) flow"
 echo "   - Code challenge/verifier validation"
 echo "   - Session ID-based token exchange"

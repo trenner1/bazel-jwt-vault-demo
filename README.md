@@ -1,13 +1,13 @@
 # Bazel JWT Vault Demo - Enterprise Team-Based Authentication
 
-A demonstration of **enterprise team-based authentication** with HashiCorp Vault and Okta, implementing **broker-generated JWT tokens** for team-based secret access. Provi## 📚 Documentation
+A demonstration of **enterprise team-based authentication** with HashiCorp Vault and Okta, implementing **broker-generated JWT tokens** for team-based secret access. Provi##  Documentation
 
 - **[Complete Setup Guide](docs/SETUP.md)**: Step-by-step configuration instructions
 - **[Architecture Documentation](docs/ARCHITECTURE.md)**: System design and JWT flow details
 - **[Development Guide](docs/DEVELOPMENT.md)**: Development and troubleshooting
 - **[Testing Guide](docs/TESTING.md)**: Comprehensive testing procedures
 
-## ⚡ Production Ready
+## Production Ready
 
 This system includes enterprise features for production deployment:
 - **RSA-Signed JWTs**: Secure broker-generated tokens with 2048-bit RSA key pairs
@@ -19,7 +19,7 @@ This system includes enterprise features for production deployment:
 
 For detailed production deployment instructions, see [docs/SETUP.md](docs/SETUP.md).tion team isolation with complete automation and stable entity management.
 
-## 🚀 What This System Provides
+## What This System Provides
 
 ### **Enterprise Team-Based Authentication**
 - **Okta Integration**: Single sign-on with your existing Okta identity provider using PKCE flow
@@ -51,7 +51,7 @@ For detailed production deployment instructions, see [docs/SETUP.md](docs/SETUP.
 - **Network Integration**: Works within existing Docker network infrastructure
 - **Entity Stability**: Teams get consistent entities with stable aliases across all authentications
 
-## 🏗️ Architecture Overview
+## Architecture Overview
 
 ### Enterprise Team-Based Authentication Flow
 
@@ -106,25 +106,25 @@ sequenceDiagram
 │                Jenkins Vault POC Network                    │
 │                  (jenkins-vault-poc_default)                │
 │                                                             │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
-│  │   Jenkins   │  │    Vault    │  │   JWT Broker        │ │
-│  │ 172.18.0.3  │  │ 172.18.0.2  │  │   172.18.0.4        │ │
-│  │    :8080    │  │    :8200    │  │      :8081          │ │
-│  └─────────────┘  └─────────────┘  └─────────────────────┘ │
-│                             │                │             │
-│                    ┌─────────────────┐      │             │
-│                    │ Okta Identity   │      │             │
-│                    │ (External OIDC) │      │             │
-│                    └─────────────────┘      │             │
-│                                             │             │
-│                    ┌─────────────────────────┐             │
-│                    │ RSA Key Pair            │             │
-│                    │ (JWT Signing)           │             │
-│                    └─────────────────────────┘             │
+│   ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
+│   │   Jenkins   │  │    Vault    │  │   JWT Broker        │ │
+│   │ 172.18.0.3  │  │ 172.18.0.2  │  │   172.18.0.4        │ │
+│   │    :8080    │  │    :8200    │  │      :8081          │ │
+│   └─────────────┘  └─────────────┘  └─────────────────────┘ │
+│                             │                 │             │
+│                    ┌─────────────────┐        │             │
+│                    │ Okta Identity   │        │             │
+│                    │ (External OIDC) │        │             │
+│                    └─────────────────┘        │             │
+│                                               │             │
+│                     ┌─────────────────────────┐             │
+│                     │ RSA Key Pair            │             │
+│                     │ (JWT Signing)           │             │
+│                     └─────────────────────────┘             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### Prerequisites
 - Docker Desktop running
@@ -150,7 +150,7 @@ docker-compose up -d
 
 📖 **For complete setup instructions**, see [docs/SETUP.md](docs/SETUP.md)
 
-## 🔐 Authentication Flow
+## Authentication Flow
 
 ### Web Browser (Enhanced UX)
 1. Navigate to `http://localhost:8081`
@@ -175,19 +175,19 @@ docker-compose up -d
 ### Tool Comparison
 
 **`./tools/bazel-auth-simple`** (Recommended)
-- ✅ Zero dependencies (only needs `curl`)
-- ✅ Works on any system
-- ✅ Auto-opens browser
-- ✅ Clear command output
-- ✅ Environment variable export
+-  Zero dependencies (only needs `curl`)
+-  Works on any system
+-  Auto-opens browser
+-  Clear command output
+-  Environment variable export
 
 **`./tools/bazel-build`**
-- ✅ Seamless Bazel integration
-- ✅ Automatic token refresh
-- ✅ Pipeline-friendly
-- ✅ Smart caching
+-  Seamless Bazel integration
+-  Automatic token refresh
+-  Pipeline-friendly
+-  Smart caching
 
-## 🔐 Authentication Flow Details
+## Authentication Flow Details
 
 ### Example Token Exchange
 
@@ -217,7 +217,7 @@ curl -X POST "http://localhost:8081/exchange" \
 }
 ```
 
-## 👥 Team-Based Access Control
+##  Team-Based Access Control
 
 ### Team Selection and Entity Management
 
@@ -237,7 +237,7 @@ Teams are automatically assigned based on Okta group membership. Users with mult
 - **Shared Access**: All team members share the same entity for consistent permissions
 - **Metadata Alignment**: Entity aliases perfectly match vault role metadata
 
-## 🧪 Testing
+##  Testing
 
 ```bash
 # Run all tests with interactive menu
@@ -249,7 +249,7 @@ Teams are automatically assigned based on Okta group membership. Users with mult
 ./tests/integration/test-team-isolation.sh # Team access control
 ```
 
-## 📚 Documentation
+##  Documentation
 
 - **[Complete Setup Guide](docs/SETUP.md)**: Step-by-step configuration instructions
 - **[Architecture Documentation](docs/ARCHITECTURE.md)**: System design and OIDC flow details
@@ -268,7 +268,7 @@ This system includes enterprise features for production deployment:
 For detailed production deployment instructions, see [docs/SETUP.md](docs/SETUP.md).
 - **Monitoring**: Implement health checks and monitoring for all components
 
-## 🔍 Troubleshooting
+##  Troubleshooting
 
 ### Common Issues
 
@@ -295,7 +295,7 @@ vault list identity/entity/id
 vault list identity/entity-alias/id
 ```
 
-## 🏆 Enterprise Benefits
+##  Enterprise Benefits
 
 ### Compared to Direct OIDC Approach
 
@@ -311,14 +311,14 @@ vault list identity/entity-alias/id
 
 ### Key Advantages
 
-✅ **Stable Team Entities**: Consistent "mobile-team", "devops-team" entities with stable aliases  
-✅ **No Entity Churn**: Same entity reused across team authentications  
-✅ **Team Context Selection**: Clean interface for multi-team users  
-✅ **Predictable Access**: Team-based permissions with stable entity management  
-✅ **Enterprise Integration**: Works with existing Okta directory structure  
-✅ **RSA Security**: Broker-controlled JWT signing with secure key management  
+ **Stable Team Entities**: Consistent "mobile-team", "devops-team" entities with stable aliases  
+ **No Entity Churn**: Same entity reused across team authentications  
+ **Team Context Selection**: Clean interface for multi-team users  
+ **Predictable Access**: Team-based permissions with stable entity management  
+ **Enterprise Integration**: Works with existing Okta directory structure  
+ **RSA Security**: Broker-controlled JWT signing with secure key management  
 
-## 📁 Repository Structure
+##  Repository Structure
 
 ```
 bazel-jwt-vault-demo/
@@ -329,7 +329,6 @@ bazel-jwt-vault-demo/
 ├── .env.example               # Configuration template
 ├── .gitignore                 # Git ignore patterns
 ├── MODULE.bazel               # Bazel configuration
-├──  bazelteam                 # Bazel team configuration
 │
 ├── broker/                    # JWT broker implementation
 │   ├── app.py                # Team-based JWT broker with OIDC integration
@@ -343,9 +342,6 @@ bazel-jwt-vault-demo/
 │
 ├── vault/                     # Vault JWT configuration
 │   └── setup.sh              # Vault setup for broker-based JWT auth
-│
-├── client/                    # Client simulation tools
-│   └── build_sim.sh          # Build simulation
 │
 ├── tests/                     # Test suites (NEW)
 │   ├── run-tests.sh          # Test runner menu
@@ -368,11 +364,11 @@ bazel-jwt-vault-demo/
     └── TESTING.md            # Testing procedures
 ```
 
-## 📄 License
+##  License
 
 MIT License - see LICENSE file for details.
 
-## 🤝 Contributing
+##  Contributing
 
 1. Fork the repository
 2. Create a feature branch
@@ -380,7 +376,7 @@ MIT License - see LICENSE file for details.
 4. Add tests for new functionality
 5. Submit a pull request
 
-## 📞 Support
+##  Support
 
 - **Issues**: [GitHub Issues](https://github.com/trenner1/bazel-jwt-vault-demo/issues)
 - **Documentation**: Check the `docs/` directory
@@ -388,4 +384,4 @@ MIT License - see LICENSE file for details.
 
 ---
 
-*Built with ❤️ for enterprise teams who want secure, automated, team-based authentication with stable entity management.*
+*Built with ❤ for enterprise teams who want secure, automated, team-based authentication with stable entity management.*

@@ -2,7 +2,7 @@
 
 This directory contains user-friendly tools to simplify the **Okta OIDC authentication flow** for Bazel builds using **Authorization Code Flow with PKCE**.
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### 1. Zero-Dependency Authentication (Recommended)
 ```bash
@@ -31,19 +31,19 @@ echo $VAULT_TOKEN
 ./tools/bazel-build --pipeline ci-main build //my:target
 ```
 
-## 🛠️ Tools Overview
+## Tools Overview
 
-### `bazel-auth-simple` - Zero-Dependency CLI ⭐
+### `bazel-auth-simple` - Zero-Dependency CLI 
 **Recommended for most use cases**
 
 A shell-based tool that works anywhere with just `curl`.
 
 **Features:**
-- ✅ **Zero dependencies** - Only needs `curl` (available everywhere)
-- ✅ **Auto-browser opening** - Automatically opens authentication URL
-- ✅ **Enhanced web UI** - Beautiful callback page with copy buttons
-- ✅ **Multiple output formats** - Token-only, export command, or full details
-- ✅ **PKCE security** - Uses Authorization Code Flow with PKCE
+-  **Zero dependencies** - Only needs `curl` (available everywhere)
+-  **Auto-browser opening** - Automatically opens authentication URL
+-  **Enhanced web UI** - Beautiful callback page with copy buttons
+-  **Multiple output formats** - Token-only, export command, or full details
+-  **PKCE security** - Uses Authorization Code Flow with PKCE
 
 **Usage:**
 ```bash
@@ -65,8 +65,8 @@ pip install requests  # Required dependency
 
 **Features:**
 - 🐍 **Python-based** - Full-featured but requires dependencies
-- 🔄 **Local server callback** - Automatic callback handling
-- 📊 **Rich output** - Detailed status and progress information
+-  **Local server callback** - Automatic callback handling
+-  **Rich output** - Detailed status and progress information
 
 **Usage:**
 ```bash
@@ -76,16 +76,16 @@ pip install requests  # Required dependency
 ./tools/bazel-auth --pipeline my-app  # Include custom metadata
 ```
 
-**⚠️ Limitation**: This tool requires the `requests` Python module. For zero-dependency usage, use `bazel-auth-simple` instead.
+**Limitation**: This tool requires the `requests` Python module. For zero-dependency usage, use `bazel-auth-simple` instead.
 
 ### `bazel-build` - Bazel Wrapper with Authentication
 A bash wrapper that combines authentication with Bazel execution.
 
 **Features:**
-- 🔐 **Automatic authentication** - Handles auth flow before running Bazel
-- ⚡ **Smart token reuse** - Detects existing tokens and offers to reuse
-- 🏷️ **Metadata integration** - Automatically includes pipeline/repo information
-- 🛠️ **Full Bazel compatibility** - Passes through all Bazel commands and flags
+-  **Automatic authentication** - Handles auth flow before running Bazel
+-  **Smart token reuse** - Detects existing tokens and offers to reuse
+- **Metadata integration** - Automatically includes pipeline/repo information
+- **Full Bazel compatibility** - Passes through all Bazel commands and flags
 
 **Usage:**
 ```bash
@@ -95,7 +95,7 @@ A bash wrapper that combines authentication with Bazel execution.
 ./tools/bazel-build --pipeline ci //my:target      # Custom metadata
 ```
 
-## 🔐 Authentication Flow (PKCE)
+##  Authentication Flow (PKCE)
 
 1. **Start**: Tool initiates Authorization Code Flow with PKCE
 2. **Browser**: Automatically opens Okta authentication URL
@@ -105,27 +105,27 @@ A bash wrapper that combines authentication with Bazel execution.
 6. **Exchange**: Tool exchanges session for team-scoped Vault token
 7. **Ready**: Token is set in environment for immediate use
 
-## 🎨 Enhanced Developer Experience
+##  Enhanced Developer Experience
 
 ### Auto-Copy Clipboard Support
 The enhanced callback page automatically:
-- 📋 Copies session ID to clipboard on page load
-- 🖱️ Provides one-click copy buttons for all commands
-- 📝 Shows ready-to-use curl commands with session ID populated
-- 🚀 Includes CLI tool usage examples with correct session ID
+-  Copies session ID to clipboard on page load
+- 🖱 Provides one-click copy buttons for all commands
+-  Shows ready-to-use curl commands with session ID populated
+-  Includes CLI tool usage examples with correct session ID
 
 ### Intelligent Token Management
-- ♻️ **Reuse detection**: Warns if token already exists in environment
-- ⏰ **TTL awareness**: Shows token expiration and usage information
-- 👥 **Team context**: Displays user teams and assigned permissions
-- 🏷️ **Metadata tracking**: Includes pipeline, repo, and target information
-- 🔍 **Metadata tracking**: Includes pipeline and build context
+- **Reuse detection**: Warns if token already exists in environment
+- **TTL awareness**: Shows token expiration and usage information
+-  **Team context**: Displays user teams and assigned permissions
+- **Metadata tracking**: Includes pipeline, repo, and target information
+-  **Metadata tracking**: Includes pipeline and build context
 
 ### Error Handling & Recovery
-- 🔄 **Automatic retries** for network issues
-- 📊 **Clear error messages** with suggested fixes
+-  **Automatic retries** for network issues
+-  **Clear error messages** with suggested fixes
 - 🚨 **Graceful fallbacks** to manual mode if auto-flow fails
-- 📋 **Detailed logging** with `--verbose` flag
+-  **Detailed logging** with `--verbose` flag
 
 ## Configuration
 

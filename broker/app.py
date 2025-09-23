@@ -107,7 +107,7 @@ async def exchange_code_for_token(code: str) -> Dict[str, Any]:
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             token_url = f"https://{OKTA_DOMAIN}/oauth2/{OKTA_AUTH_SERVER_ID}/v1/token"
-            print(f"🔄 Attempting token exchange at: {token_url}")
+            print(f" Attempting token exchange at: {token_url}")
             
             token_response = await client.post(
                 token_url,
@@ -123,7 +123,7 @@ async def exchange_code_for_token(code: str) -> Dict[str, Any]:
             
             print(f"📡 Token response status: {token_response.status_code}")
             if token_response.status_code != 200:
-                print(f"❌ Token exchange failed: {token_response.text}")
+                print(f" Token exchange failed: {token_response.text}")
                 raise HTTPException(
                     status_code=400, 
                     detail=f"Token exchange failed: {token_response.text}"
@@ -131,7 +131,7 @@ async def exchange_code_for_token(code: str) -> Dict[str, Any]:
             
             return token_response.json()
     except Exception as e:
-        print(f"💥 Exception in token exchange: {e}")
+        print(f" Exception in token exchange: {e}")
         raise
 
 async def get_user_info(access_token: str) -> Dict[str, Any]:
@@ -150,26 +150,26 @@ async def get_user_info(access_token: str) -> Dict[str, Any]:
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             userinfo_url = f"https://{OKTA_DOMAIN}/oauth2/{OKTA_AUTH_SERVER_ID}/v1/userinfo"
-            print(f"👤 Getting user info from: {userinfo_url}")
+            print(f" Getting user info from: {userinfo_url}")
             
             userinfo_response = await client.get(
                 userinfo_url,
                 headers={"Authorization": f"Bearer {access_token}"}
             )
             
-            print(f"📋 User info response status: {userinfo_response.status_code}")
+            print(f" User info response status: {userinfo_response.status_code}")
             if userinfo_response.status_code != 200:
-                print(f"❌ User info failed: {userinfo_response.text}")
+                print(f" User info failed: {userinfo_response.text}")
                 raise HTTPException(
                     status_code=400,
                     detail=f"Failed to get user info: {userinfo_response.text}"
                 )
             
             user_data = userinfo_response.json()
-            print(f"👥 User info retrieved for: {user_data.get('email', 'unknown')}")
+            print(f" User info retrieved for: {user_data.get('email', 'unknown')}")
             return user_data
     except Exception as e:
-        print(f"💥 Exception in get_user_info: {e}")
+        print(f" Exception in get_user_info: {e}")
         raise
 
 def determine_vault_role_from_okta_groups(okta_groups: list) -> str:
@@ -250,7 +250,7 @@ def generate_team_based_jwt(user_info: Dict[str, Any], team: str) -> str:
     except FileNotFoundError:
         # Fallback to a simple key for development
         private_key = "bazel-demo-jwt-signing-key-2024"
-        print("⚠️  Using fallback signing key - generate jwt_signing_key for production")
+        print("  Using fallback signing key - generate jwt_signing_key for production")
     
     # Current time
     now = datetime.datetime.utcnow()
@@ -272,7 +272,7 @@ def generate_team_based_jwt(user_info: Dict[str, Any], team: str) -> str:
     try:
         token = jwt.encode(payload, private_key, algorithm="RS256")
     except Exception as e:
-        print(f"⚠️  JWT signing failed with RSA key, using HS256: {e}")
+        print(f"  JWT signing failed with RSA key, using HS256: {e}")
         # Fallback to symmetric signing for development
         token = jwt.encode(payload, "bazel-demo-jwt-signing-key-2024", algorithm="HS256")
     
@@ -309,19 +309,19 @@ async def authenticate_with_vault_oidc(okta_id_token: str, user_info: Dict[str, 
             team = determine_team_from_okta_groups(groups)
             vault_role = determine_vault_role_from_okta_groups(groups)
         
-        print(f"🏛️ Authenticating with Vault using team-based JWT")
-        print(f"👥 User: {user_info.get('email', 'unknown')}")
-        print(f"🏷️  Team: {team}")
-        print(f"🎭 Vault role: {vault_role}")
-        print(f"👥 User groups: {groups}")
+        print(f"Authenticating with Vault using team-based JWT")
+        print(f" User: {user_info.get('email', 'unknown')}")
+        print(f"  Team: {team}")
+        print(f" Vault role: {vault_role}")
+        print(f" User groups: {groups}")
         
         # Generate team-based JWT token
         team_jwt = generate_team_based_jwt(user_info, team)
-        print(f"🔐 Generated team-based JWT for team: {team}")
+        print(f" Generated team-based JWT for team: {team}")
         
         async with httpx.AsyncClient(timeout=30.0) as client:
             vault_auth_url = f"{VAULT_ADDR}/v1/auth/jwt/login"
-            print(f"🔐 Vault JWT auth URL: {vault_auth_url}")
+            print(f" Vault JWT auth URL: {vault_auth_url}")
             
             vault_auth_response = await client.post(
                 vault_auth_url,
@@ -331,9 +331,9 @@ async def authenticate_with_vault_oidc(okta_id_token: str, user_info: Dict[str, 
                 }
             )
             
-            print(f"🏛️ Vault auth response status: {vault_auth_response.status_code}")
+            print(f" Vault auth response status: {vault_auth_response.status_code}")
             if vault_auth_response.status_code != 200:
-                print(f"❌ Vault JWT auth failed: {vault_auth_response.text}")
+                print(f" Vault JWT auth failed: {vault_auth_response.text}")
                 raise RuntimeError(f"Vault JWT auth failed: {vault_auth_response.text}")
             
             vault_auth = vault_auth_response.json()
@@ -341,7 +341,7 @@ async def authenticate_with_vault_oidc(okta_id_token: str, user_info: Dict[str, 
             entity_id = vault_auth["auth"].get("entity_id", "unknown")
             
             print(f"✓ User {user_info.get('email', 'unknown')} authenticated with Vault via team-based JWT")
-            print(f"🏷️  Entity ID: {entity_id} (shared by team: {team})")
+            print(f"  Entity ID: {entity_id} (shared by team: {team})")
             return vault_token
     except Exception as e:
         print(f"💥 Exception in authenticate_with_vault_oidc: {e}")
@@ -425,7 +425,7 @@ async def pkce_auth_exchange(code: str, state: str) -> Dict[str, Any]:
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             token_url = f"https://{OKTA_DOMAIN}/oauth2/{OKTA_AUTH_SERVER_ID}/v1/token"
-            print(f"🔄 PKCE token exchange at: {token_url}")
+            print(f" PKCE token exchange at: {token_url}")
             
             token_response = await client.post(
                 token_url,
@@ -440,9 +440,9 @@ async def pkce_auth_exchange(code: str, state: str) -> Dict[str, Any]:
                 headers={"Content-Type": "application/x-www-form-urlencoded"}
             )
             
-            print(f"📡 PKCE token response status: {token_response.status_code}")
+            print(f" PKCE token response status: {token_response.status_code}")
             if token_response.status_code != 200:
-                print(f"❌ PKCE token exchange failed: {token_response.text}")
+                print(f" PKCE token exchange failed: {token_response.text}")
                 raise HTTPException(
                     status_code=400,
                     detail=f"PKCE token exchange failed: {token_response.text}"
@@ -450,7 +450,7 @@ async def pkce_auth_exchange(code: str, state: str) -> Dict[str, Any]:
             
             return token_response.json()
     except Exception as e:
-        print(f"💥 Exception in pkce_auth_exchange: {e}")
+        print(f" Exception in pkce_auth_exchange: {e}")
         raise
 
 async def create_child_token(parent_token: str, user_info: Dict[str, Any], request_body: Dict[str, Any]) -> Dict[str, Any]:
@@ -562,11 +562,11 @@ async def startup():
     try:
         validate_okta_config()
         print(f"✓ Okta OIDC configured for domain: {OKTA_DOMAIN}")
-        print("🚀 Bazel JWT Vault Demo ready with Okta OIDC authentication")
-        print("⚠️  Vault connectivity will be verified on first request")
+        print(" Bazel JWT Vault Demo ready with Okta OIDC authentication")
+        print("  Vault connectivity will be verified on first request")
         
     except Exception as e:
-        print(f"❌ Failed to initialize broker: {e}")
+        print(f" Failed to initialize broker: {e}")
         raise
 
 # Routes
@@ -588,7 +588,7 @@ async def home():
     </head>
     <body>
         <div class="container">
-            <h1>🏗️ Bazel JWT Vault Demo</h1>
+            <h1> Bazel JWT Vault Demo</h1>
             <div class="info">
                 <h3>Enterprise OIDC Authentication</h3>
                 <p>This demo uses <strong>Okta OIDC</strong> for secure authentication with HashiCorp Vault.</p>
@@ -597,13 +597,13 @@ async def home():
             
             <h2>Authentication Methods</h2>
             <div class="info">
-                <h4>🌐 Web Browser Authentication</h4>
+                <h4> Web Browser Authentication</h4>
                 <p>For interactive use via web browser:</p>
-                <a href="/auth/login" class="button">🔐 Login with Okta</a>
+                <a href="/auth/login" class="button"> Login with Okta</a>
             </div>
             
             <div class="info">
-                <h4>💻 CLI/Bazel Authentication (PKCE Flow)</h4>
+                <h4> CLI/Bazel Authentication (PKCE Flow)</h4>
                 <p>For command-line tools and Bazel builds:</p>
                 <pre>curl -X POST http://localhost:8081/cli/start</pre>
                 <p>Follow the returned instructions to authenticate.</p>
@@ -800,42 +800,42 @@ async def auth_callback(code: str = None, state: str = None, error: str = None):
             </head>
             <body>
                 <div class="container">
-                    <h1>🎉 Authentication Successful!</h1>
+                    <h1> Authentication Successful!</h1>
                     <div class="success">
                         <p><strong>Welcome:</strong> {user_info.get('email', 'Unknown')}</p>
                         <p><strong>Teams:</strong> {', '.join(user_info.get('groups', []))}</p>
                     </div>
                     
                     <div class="session-box">
-                        <p><strong>🔑 Your Session ID:</strong></p>
+                        <p><strong> Your Session ID:</strong></p>
                         <p style="font-family: monospace; word-break: break-all; margin: 10px 0;">
                             <span id="sessionId">{session_id}</span>
-                            <button class="copy-btn" onclick="copySessionId()">📋 Copy</button>
+                            <button class="copy-btn" onclick="copySessionId()"> Copy</button>
                         </p>
                     </div>
                     
                     <div class="info">
-                        <h3>🚀 Quick Commands</h3>
+                        <h3> Quick Commands</h3>
                         <p><strong>Get your Vault token:</strong></p>
                         <div class="command-box">
 curl -X POST http://localhost:8081/exchange \\<br>
 &nbsp;&nbsp;-H "Content-Type: application/json" \\<br>
 &nbsp;&nbsp;-d '{{"session_id": "{session_id}", "pipeline": "my-pipeline", "repo": "my-repo", "target": "my-target"}}'
                         </div>
-                        <button class="copy-btn" onclick="copyCurlCommand()">📋 Copy curl command</button>
+                        <button class="copy-btn" onclick="copyCurlCommand()"> Copy curl command</button>
                         
                         <p style="margin-top: 20px;"><strong>Or use our CLI tool:</strong></p>
                         <div class="command-box">
 ./tools/bazel-auth-simple --session-id {session_id}
                         </div>
-                        <button class="copy-btn" onclick="copyCliCommand()">📋 Copy CLI command</button>
+                        <button class="copy-btn" onclick="copyCliCommand()"> Copy CLI command</button>
                     </div>
                     
                     <div class="info">
-                        <h3>📝 Token Exchange Payload</h3>
+                        <h3> Token Exchange Payload</h3>
                         <p>You can customize the metadata for your specific use case:</p>
                         <pre id="exchangePayload">{json.dumps(response_data['next_steps']['example']['body'], indent=2)}</pre>
-                        <button class="copy-btn" onclick="copyPayload()">📋 Copy JSON</button>
+                        <button class="copy-btn" onclick="copyPayload()"> Copy JSON</button>
                     </div>
                     
                     <p style="text-align: center; margin-top: 30px;">
@@ -847,7 +847,7 @@ curl -X POST http://localhost:8081/exchange \\<br>
                 function copyToClipboard(text, button) {{
                     navigator.clipboard.writeText(text).then(function() {{
                         const originalText = button.textContent;
-                        button.textContent = '✅ Copied!';
+                        button.textContent = ' Copied!';
                         button.classList.add('copied');
                         setTimeout(() => {{
                             button.textContent = originalText;
@@ -863,7 +863,7 @@ curl -X POST http://localhost:8081/exchange \\<br>
                         document.body.removeChild(textArea);
                         
                         const originalText = button.textContent;
-                        button.textContent = '✅ Copied!';
+                        button.textContent = ' Copied!';
                         button.classList.add('copied');
                         setTimeout(() => {{
                             button.textContent = originalText;
@@ -954,7 +954,7 @@ async def team_selection_page(temp_session_id: str):
     </head>
     <body>
         <div class="container">
-            <h1>🏷️ Select Team Context</h1>
+            <h1> Select Team Context</h1>
             <div class="user-info">
                 <p><strong>Welcome:</strong> {user_info.get('email', 'Unknown')}</p>
                 <p>You belong to multiple teams. Please select which team context you'd like to use for this session.</p>
@@ -1074,7 +1074,7 @@ async def complete_team_selection(req: Request):
         </head>
         <body>
             <div class="container">
-                <h1>🎉 Authentication Successful!</h1>
+                <h1> Authentication Successful!</h1>
                 <div class="success">
                     <p><strong>Welcome:</strong> {user_info.get('email', 'Unknown')}</p>
                     <p><strong>Team Context:</strong> {selected_team}</p>
@@ -1082,32 +1082,32 @@ async def complete_team_selection(req: Request):
                 </div>
                 
                 <div class="session-box">
-                    <p><strong>🔑 Your Session ID:</strong></p>
+                    <p><strong> Your Session ID:</strong></p>
                     <p style="font-family: monospace; word-break: break-all; margin: 10px 0;">
                         <span id="sessionId">{session_id}</span>
-                        <button class="copy-btn" onclick="copySessionId()">📋 Copy</button>
+                        <button class="copy-btn" onclick="copySessionId()"> Copy</button>
                     </p>
                 </div>
                 
                 <div class="info">
-                    <h3>🚀 Quick Commands</h3>
+                    <h3> Quick Commands</h3>
                     <p><strong>Get your Vault token:</strong></p>
                     <div class="command-box">
 curl -X POST http://localhost:8081/exchange \\<br>
 &nbsp;&nbsp;-H "Content-Type: application/json" \\<br>
 &nbsp;&nbsp;-d '{{"session_id": "{session_id}", "pipeline": "my-pipeline", "repo": "my-repo", "target": "my-target"}}'
                     </div>
-                    <button class="copy-btn" onclick="copyCurlCommand()">📋 Copy curl command</button>
+                    <button class="copy-btn" onclick="copyCurlCommand()"> Copy curl command</button>
                     
                     <p><strong>Or use our CLI tool:</strong></p>
                     <div class="command-box">
 ./tools/bazel-auth-simple --session-id {session_id}
                     </div>
-                    <button class="copy-btn" onclick="copyCLICommand()">📋 Copy CLI command</button>
+                    <button class="copy-btn" onclick="copyCLICommand()"> Copy CLI command</button>
                 </div>
                 
                 <div class="info">
-                    <h3>📄 Token Exchange Payload</h3>
+                    <h3> Token Exchange Payload</h3>
                     <p>You can customize the metadata for your specific use case:</p>
                     <pre id="jsonPayload">{{
   "session_id": "{session_id}",
@@ -1115,7 +1115,7 @@ curl -X POST http://localhost:8081/exchange \\<br>
   "repo": "your-repo",
   "target": "your-target"
 }}</pre>
-                    <button class="copy-btn" onclick="copyJSON()">📋 Copy JSON</button>
+                    <button class="copy-btn" onclick="copyJSON()"> Copy JSON</button>
                 </div>
                 
                 <div style="text-align: center; margin-top: 30px;">
@@ -1128,10 +1128,10 @@ curl -X POST http://localhost:8081/exchange \\<br>
                     const sessionId = document.getElementById('sessionId').innerText;
                     navigator.clipboard.writeText(sessionId).then(() => {{
                         const btn = event.target;
-                        btn.textContent = '✅ Copied!';
+                        btn.textContent = ' Copied!';
                         btn.classList.add('copied');
                         setTimeout(() => {{
-                            btn.textContent = '📋 Copy';
+                            btn.textContent = ' Copy';
                             btn.classList.remove('copied');
                         }}, 2000);
                     }});
@@ -1143,10 +1143,10 @@ curl -X POST http://localhost:8081/exchange \\<br>
   -d '{{"session_id": "{session_id}", "pipeline": "my-pipeline", "repo": "my-repo", "target": "my-target"}}'`;
                     navigator.clipboard.writeText(curlCmd).then(() => {{
                         const btn = event.target;
-                        btn.textContent = '✅ Copied!';
+                        btn.textContent = ' Copied!';
                         btn.classList.add('copied');
                         setTimeout(() => {{
-                            btn.textContent = '📋 Copy curl command';
+                            btn.textContent = ' Copy curl command';
                             btn.classList.remove('copied');
                         }}, 2000);
                     }});
@@ -1156,10 +1156,10 @@ curl -X POST http://localhost:8081/exchange \\<br>
                     const cliCmd = `./tools/bazel-auth-simple --session-id {session_id}`;
                     navigator.clipboard.writeText(cliCmd).then(() => {{
                         const btn = event.target;
-                        btn.textContent = '✅ Copied!';
+                        btn.textContent = ' Copied!';
                         btn.classList.add('copied');
                         setTimeout(() => {{
-                            btn.textContent = '📋 Copy CLI command';
+                            btn.textContent = ' Copy CLI command';
                             btn.classList.remove('copied');
                         }}, 2000);
                     }});
@@ -1169,10 +1169,10 @@ curl -X POST http://localhost:8081/exchange \\<br>
                     const jsonText = document.getElementById('jsonPayload').innerText;
                     navigator.clipboard.writeText(jsonText).then(() => {{
                         const btn = event.target;
-                        btn.textContent = '✅ Copied!';
+                        btn.textContent = ' Copied!';
                         btn.classList.add('copied');
                         setTimeout(() => {{
-                            btn.textContent = '📋 Copy JSON';
+                            btn.textContent = ' Copy JSON';
                             btn.classList.remove('copied');
                         }}, 2000);
                     }});

@@ -33,7 +33,7 @@ async def authenticate_for_bazel_build(pipeline="bazel-build", repo="example-rep
     async with httpx.AsyncClient(timeout=30.0) as client:
         try:
             # Step 1: Start CLI authentication flow
-            print("🔄 Starting authentication for Bazel build...")
+            print(" Starting authentication for Bazel build...")
             start_response = await client.post(f"{BROKER_URL}/cli/start")
             
             if start_response.status_code != 200:
@@ -46,9 +46,9 @@ async def authenticate_for_bazel_build(pipeline="bazel-build", repo="example-rep
             
             # Step 2: Open browser for user authentication
             print("\n" + "="*60)
-            print("🔐 AUTHENTICATION REQUIRED FOR BAZEL BUILD")
+            print(" AUTHENTICATION REQUIRED FOR BAZEL BUILD")
             print("="*60)
-            print("🌐 Opening browser for Okta authentication...")
+            print(" Opening browser for Okta authentication...")
             print(f"🔗 URL: {auth_url}")
             print("="*60)
             
@@ -57,9 +57,9 @@ async def authenticate_for_bazel_build(pipeline="bazel-build", repo="example-rep
             
             # Step 3: Wait for user to complete authentication
             print("\n⏳ Please complete authentication in your browser...")
-            print("📋 After authentication, you'll be redirected to a callback page.")
+            print(" After authentication, you'll be redirected to a callback page.")
             print("� The page will show a JSON response with authentication details.")
-            print("📝 Copy the 'session_id' value from that JSON response:")
+            print(" Copy the 'session_id' value from that JSON response:")
             
             session_id = input("\n� Paste session_id: ").strip().strip('"')
             
@@ -67,7 +67,7 @@ async def authenticate_for_bazel_build(pipeline="bazel-build", repo="example-rep
                 print("❌ No session_id provided")
                 return None
             
-            print(f"✅ Using session: {session_id}")
+            print(f" Using session: {session_id}")
             
             # Step 4: Exchange session for constrained Vault token
             print(f"🎫 Getting Vault token for build context...")
@@ -84,7 +84,7 @@ async def authenticate_for_bazel_build(pipeline="bazel-build", repo="example-rep
             if vault_response.status_code == 200:
                 token_data = vault_response.json()
                 user_email = token_data['metadata']['user']
-                print(f"🏗️ Build token created:")
+                print(f" Build token created:")
                 print(f"   - Team: {token_data['metadata']['team']}")
                 print(f"   - Policies: {', '.join(token_data['policies'])}")
                 print(f"   - TTL: {token_data['ttl']}s")
@@ -107,7 +107,7 @@ async def authenticate_for_bazel_build(pipeline="bazel-build", repo="example-rep
 
 async def main():
     """Example usage"""
-    print("🏗️ Bazel Build Authentication Example")
+    print(" Bazel Build Authentication Example")
     print("=====================================")
     
     # Simulate Bazel build context
@@ -121,22 +121,22 @@ async def main():
     auth_result = await authenticate_for_bazel_build(**build_context)
     
     if auth_result:
-        print("\n✅ Authentication successful!")
-        print(f"🔐 Vault token available for team: {auth_result['team']}")
-        print(f"👤 Authenticated as: {auth_result['user']}")
-        print("\n🏗️ Bazel build can now proceed with team-scoped access to:")
+        print("\n Authentication successful!")
+        print(f" Vault token available for team: {auth_result['team']}")
+        print(f" Authenticated as: {auth_result['user']}")
+        print("\n Bazel build can now proceed with team-scoped access to:")
         
         for policy in auth_result['policies']:
             if 'mobile' in policy:
-                print("   📱 Mobile secrets and certificates")
+                print("    Mobile secrets and certificates")
             elif 'backend' in policy:
-                print("   ⚙️ Backend API keys and database credentials")
+                print("    Backend API keys and database credentials")
             elif 'frontend' in policy:
-                print("   🌐 Frontend build tokens and CDN keys")
+                print("    Frontend build tokens and CDN keys")
             elif 'base' in policy:
-                print("   🔧 Base build tools and common secrets")
+                print("    Base build tools and common secrets")
                 
-        print(f"\n💡 Token expires in {auth_result.get('ttl', 'unknown')} seconds")
+        print(f"\n Token expires in {auth_result.get('ttl', 'unknown')} seconds")
         
         # In real Bazel usage, you'd now:
         # 1. Set VAULT_TOKEN environment variable
@@ -145,7 +145,7 @@ async def main():
         
     else:
         print("\n❌ Authentication failed!")
-        print("🏗️ Bazel build cannot proceed without authentication")
+        print(" Bazel build cannot proceed without authentication")
         sys.exit(1)
 
 if __name__ == "__main__":

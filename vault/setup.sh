@@ -14,14 +14,14 @@ set -e
 
 # Load environment variables from .env file if it exists
 if [[ -f .env ]]; then
-    echo "📄 Loading environment variables from .env file..."
+    echo "Loading environment variables from .env file..."
     # Export variables from .env, ignoring comments and empty lines
     export $(grep -E '^[A-Z_]+=.*' .env | xargs)
 elif [[ -f ../.env ]]; then
-    echo "📄 Loading environment variables from ../.env file..."
+    echo "Loading environment variables from ../.env file..."
     export $(grep -E '^[A-Z_]+=.*' ../.env | xargs)
 else
-    echo "⚠️  No .env file found. Please ensure environment variables are set."
+    echo "WARNING: No .env file found. Please ensure environment variables are set."
 fi
 
 # Check required environment variables
@@ -61,17 +61,17 @@ if [[ -z "$OKTA_CLIENT_SECRET" ]]; then
     OKTA_CLIENT_SECRET="demo-secret"
 fi
 
-echo "🏗️ Setting up Vault for Bazel JWT Demo with Broker-based Authentication..."
+echo " Setting up Vault for Bazel JWT Demo with Broker-based Authentication..."
 echo "Vault Address: $VAULT_ADDR"
 echo "Okta Domain: $OKTA_DOMAIN (for broker authentication)"
 echo "Client ID: $OKTA_CLIENT_ID (for broker authentication)"
 
 # 1) Enable KV v2 secrets engine
-echo "📁 Enabling KV v2 secrets engine..."
+echo " Enabling KV v2 secrets engine..."
 vault secrets enable -version=2 -path=kv kv || echo "KV engine already enabled"
 
 # 2) Create team-specific policies for fine-grained access control
-echo "🔐 Creating team-specific policies..."
+echo " Creating team-specific policies..."
 
 # Base policy - minimal access for all authenticated users
 vault policy write bazel-base - <<EOF
@@ -142,13 +142,13 @@ path "kv/data/dev/apps/team-frontend-team-pipeline/*" {
 EOF
 
 echo "Created policies:"
-echo "  🔒 bazel-base: shared secrets + user-specific paths"
-echo "  📱 bazel-mobile-team: mobile development secrets"
-echo "  🔧 bazel-backend-team: backend development secrets"
-echo "  🌐 bazel-frontend-team: frontend development secrets"
+echo "   bazel-base: shared secrets + user-specific paths"
+echo "   bazel-mobile-team: mobile development secrets"
+echo "   bazel-backend-team: backend development secrets"
+echo "   bazel-frontend-team: frontend development secrets"
 
 # 3) Create team-specific secrets with realistic content
-echo "📋 Creating team-specific secrets..."
+echo " Creating team-specific secrets..."
 
 # Shared secrets (accessible to all teams)
 vault kv put kv/dev/shared/common \
@@ -215,13 +215,13 @@ vault kv put kv/dev/apps/team-frontend-team-pipeline/legacy \
   legacy_frontend_key="frontend-legacy-789"
 
 echo "Created team-specific secrets:"
-echo "  📱 Mobile team: kv/dev/mobile/* (iOS, Android, shared API)"
-echo "  🔧 Backend team: kv/dev/backend/* (database, API, external services)"
-echo "  🌐 Frontend team: kv/dev/frontend/* (build, deployment, analytics)"
-echo "  📋 Legacy paths: kv/dev/apps/team-*-pipeline/* (backward compatibility)"
+echo "   Mobile team: kv/dev/mobile/* (iOS, Android, shared API)"
+echo "   Backend team: kv/dev/backend/* (database, API, external services)"
+echo "   Frontend team: kv/dev/frontend/* (build, deployment, analytics)"
+echo "   Legacy paths: kv/dev/apps/team-*-pipeline/* (backward compatibility)"
 
 # 4) Configure broker-based JWT authentication
-echo "🔐 Configuring broker-based JWT authentication..."
+echo " Configuring broker-based JWT authentication..."
 
 # Enable JWT auth method
 vault auth enable jwt || echo "JWT auth method already enabled"
@@ -234,7 +234,7 @@ vault write auth/jwt/config \
   jwt_validation_pubkeys=@/app/jwt_signing_key.pub
 
 # 5) Create team-specific JWT roles
-echo "👥 Configuring team-specific JWT roles..."
+echo " Configuring team-specific JWT roles..."
 
 # Team-based JWT authentication creates stable entities per team
 # Each role maps to a specific team with consistent subject claims
@@ -289,11 +289,11 @@ vault write auth/jwt/role/base-team \
   max_ttl="2h"
 
 # 6) Enable identity secrets engine for team-based entity management
-echo "👤 Configuring identity management for team-based entities..."
+echo " Configuring identity management for team-based entities..."
 vault secrets enable -path=identity identity || echo "Identity engine already enabled"
 
 # 7) Create identity groups for team-based access control
-echo "👥 Creating identity groups (entities will be created dynamically by broker authentication)..."
+echo " Creating identity groups (entities will be created dynamically by broker authentication)..."
 
 # Note: With broker-based JWT authentication, entities are created automatically
 # when users authenticate with team-specific JWTs. Each team gets one stable entity
@@ -324,35 +324,35 @@ vault write identity/group name="devops-team" \
   metadata=description="DevOps team with cross-functional access - entities created via devops-team JWT"
 
 echo ""
-echo "🎉 Vault setup complete for broker-based JWT authentication!"
+echo " Vault setup complete for broker-based JWT authentication!"
 echo ""
-echo "📊 Configuration Summary:"
-echo "  🔐 Auth Method: Broker-generated JWT tokens"
-echo "  🔑 Token Signing: RSA 2048-bit key pair (broker-managed)"
-echo "  🏢 User Authentication: Okta OIDC (via broker)"
-echo "  👥 Entity Management: Team-based with stable aliases"
+echo " Configuration Summary:"
+echo "   Auth Method: Broker-generated JWT tokens"
+echo "   Token Signing: RSA 2048-bit key pair (broker-managed)"
+echo "   User Authentication: Okta OIDC (via broker)"
+echo "   Entity Management: Team-based with stable aliases"
 echo ""
-echo "🔄 Authentication Flow:"
+echo " Authentication Flow:"
 echo "  1. User authenticates with broker via Okta OIDC"
 echo "  2. Broker determines user's team memberships"
 echo "  3. User selects team context (if multiple teams)"
 echo "  4. Broker generates team-specific JWT token"
 echo "  5. Vault validates JWT and creates/reuses team entity"
 echo ""
-echo "👥 Team Roles (JWT Subjects):"
-echo "  📱 mobile-team: JWT sub='mobile-team' → mobile secrets"
-echo "  🔧 backend-team: JWT sub='backend-team' → backend secrets"
-echo "  🌐 frontend-team: JWT sub='frontend-team' → frontend secrets"
-echo "  ⚙️  devops-team: JWT sub='devops-team' → all secrets"
-echo "  🔧 base-team: Fallback role → shared secrets only"
+echo " Team Roles (JWT Subjects):"
+echo "   mobile-team: JWT sub='mobile-team' → mobile secrets"
+echo "   backend-team: JWT sub='backend-team' → backend secrets"
+echo "   frontend-team: JWT sub='frontend-team' → frontend secrets"
+echo "   devops-team: JWT sub='devops-team' → all secrets"
+echo "   base-team: Fallback role → shared secrets only"
 echo ""
-echo "🗂️ Secret Paths:"
-echo "  📂 kv/dev/shared/* - Accessible to all teams"
-echo "  📱 kv/dev/mobile/* - Mobile team only"
-echo "  🔧 kv/dev/backend/* - Backend team only"
-echo "  🌐 kv/dev/frontend/* - Frontend team only"
+echo "Secret Paths:"
+echo "   kv/dev/shared/* - Accessible to all teams"
+echo "   kv/dev/mobile/* - Mobile team only"
+echo "   kv/dev/backend/* - Backend team only"
+echo "   kv/dev/frontend/* - Frontend team only"
 echo ""
-echo "🚀 Next Steps:"
+echo " Next Steps:"
 echo "  1. Deploy authentication broker with:"
 echo "     - RSA key pair for JWT signing"
 echo "     - Okta OIDC configuration"

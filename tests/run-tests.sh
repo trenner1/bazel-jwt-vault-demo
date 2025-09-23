@@ -4,7 +4,7 @@ set -euo pipefail
 # Test Runner for Bazel JWT Vault Demo
 # Simplified interface for running all integration tests
 
-echo "🧪 Bazel JWT Vault Demo - Test Runner"
+echo " Bazel JWT Vault Demo - Test Runner"
 echo "====================================="
 
 TEST_DIR="$(dirname "$0")/integration"
@@ -16,27 +16,27 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 log_info() {
-    echo -e "${BLUE}📋 $1${NC}"
+    echo -e "${BLUE} $1${NC}"
 }
 
 log_success() {
-    echo -e "${GREEN}✅ $1${NC}"
+    echo -e "${GREEN} $1${NC}"
 }
 
 log_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
+    echo -e "${YELLOW}$1${NC}"
 }
 
 # Menu function
 show_menu() {
     echo
     log_info "Available Test Suites:"
-    echo "1. 🔐 Okta Authentication Test (automated)"
-    echo "2. �️  CLI Tools Test (automated)"
-    echo "3. �👥 Team Isolation Test (interactive)"
-    echo "4. 👤 User Identity Test (interactive)"
-    echo "5. 🚀 Full Workflow Test (comprehensive)"
-    echo "6. 🎯 Run All Tests"
+    echo "1.  Okta Authentication Test (automated)"
+    echo "2. �  CLI Tools Test (automated)"
+    echo "3. � Team Isolation Test (interactive)"
+    echo "4.  User Identity Test (interactive)"
+    echo "5.  Full Workflow Test (comprehensive)"
+    echo "6.  Run All Tests"
     echo "7. ❓ Help & Documentation"
     echo "0. Exit"
     echo
@@ -60,45 +60,45 @@ show_help() {
     echo
     log_info "Test Documentation"
     echo
-    echo "📋 Test Descriptions:"
+    echo " Test Descriptions:"
     echo
-    echo "🔐 Okta Authentication Test:"
+    echo " Okta Authentication Test:"
     echo "   - Validates OIDC integration with Okta and PKCE flow"
     echo "   - Tests broker endpoints and enhanced callback page"
     echo "   - Verifies session management and token exchange"
     echo "   - Can run automated validation + optional interactive test"
     echo
-    echo "🛠️  CLI Tools Test:"
+    echo "CLI Tools Test:"
     echo "   - Tests bazel-auth-simple (zero dependencies, recommended)"
     echo "   - Validates PKCE flow initiation from CLI tools"
     echo "   - Checks error handling and integration with broker API"
     echo "   - Verifies tool availability and proper configuration"
     echo
-    echo "👥 Team Isolation Test:"
+    echo " Team Isolation Test:"
     echo "   - Tests Okta group-based team access control"
     echo "   - Verifies team-specific secret access patterns"
     echo "   - Validates cross-team access restrictions"
     echo "   - Requires authentication as different team members"
     echo
-    echo "👤 User Identity Test:"
+    echo " User Identity Test:"
     echo "   - Tests user-specific identity tracking"
     echo "   - Verifies entity reuse for same user"
     echo "   - Tests user-specific secret paths"
     echo "   - Validates metadata preservation"
     echo
-    echo "🚀 Full Workflow Test:"
+    echo " Full Workflow Test:"
     echo "   - Comprehensive end-to-end system verification"
     echo "   - Runs all automated tests plus additional checks"
     echo "   - Provides complete system health assessment"
     echo "   - Generates detailed test report"
     echo
-    echo "📚 Prerequisites:"
+    echo " Prerequisites:"
     echo "   - Docker Compose running (broker and vault-setup services)"
     echo "   - Okta developer account configured"
     echo "   - Required Okta groups created (mobile-developers, etc.)"
     echo "   - Test users assigned to appropriate groups"
     echo
-    echo "🔧 Setup Commands:"
+    echo " Setup Commands:"
     echo "   docker-compose up       # Start services"
     echo "   ./tests/run-tests.sh    # Run this test runner"
     echo

@@ -1,8 +1,8 @@
-# 🧪 Testing Guide
+#  Testing Guide
 
 This comprehensive testing guide covers all aspects of testing the Enterprise OIDC Vault Demo, from unit tests to end-to-end integration testing.
 
-## 📋 Table of Contents
+##  Table of Contents
 
 - [Testing Philosophy](#testing-philosophy)
 - [Test Suite Overview](#test-suite-overview)
@@ -13,7 +13,7 @@ This comprehensive testing guide covers all aspects of testing the Enterprise OI
 - [Security Testing](#security-testing)
 - [Troubleshooting Tests](#troubleshooting-tests)
 
-## 🎯 Testing Philosophy
+##  Testing Philosophy
 
 Our testing strategy follows the testing pyramid principle:
 
@@ -39,7 +39,7 @@ Our testing strategy follows the testing pyramid principle:
 4. **Security First**: Validate all security controls and edge cases
 5. **Performance Awareness**: Monitor performance characteristics under load
 
-## 📊 Test Suite Overview
+##  Test Suite Overview
 
 ### Test Categories
 
@@ -74,7 +74,7 @@ tests/
     └── test-token-throughput.sh      # Token creation throughput
 ```
 
-## 🚀 Running Tests
+##  Running Tests
 
 ### Interactive Test Runner
 
@@ -91,15 +91,15 @@ This provides a menu-driven interface:
 ║      Enterprise OIDC Test Suite        ║
 ╠════════════════════════════════════════╣
 ║                                        ║
-║  1. 🔐 Test Okta PKCE Authentication   ║
-║  2. 🛠️  Test CLI Tools                 ║
-║  3. 👥 Test Team Isolation             ║
-║  4. 👤 Test User Identity              ║
-║  5. 🚀 Run Full Workflow               ║
-║  6. 🔒 Run Security Tests              ║
-║  7. ⚡ Run Performance Tests           ║
-║  8. 🧪 Run All Tests                   ║
-║  9. 🔧 Debug Mode                      ║
+║  1.  Test Okta PKCE Authentication   ║
+║  2. Test CLI Tools                 ║
+║  3.  Test Team Isolation             ║
+║  4.  Test User Identity              ║
+║  5.  Run Full Workflow               ║
+║  6.  Run Security Tests              ║
+║  7.  Run Performance Tests           ║
+║  8.  Run All Tests                   ║
+║  9.  Debug Mode                      ║
 ║  9. ❌ Exit                            ║
 ║                                        ║
 ╚════════════════════════════════════════╝
@@ -196,7 +196,7 @@ curl -f http://localhost:8200/v1/sys/health || {
 #!/bin/bash
 # tests/integration/test-okta-auth.sh
 
-echo "🔐 Testing Okta OIDC Authentication Flow..."
+echo " Testing Okta OIDC Authentication Flow..."
 
 # Test 1: Broker health check
 echo "Testing broker health..."
@@ -205,7 +205,7 @@ if [ "$response" != "200" ]; then
     echo "❌ Broker health check failed (HTTP $response)"
     exit 1
 fi
-echo "✅ Broker is healthy"
+echo " Broker is healthy"
 
 # Test 2: PKCE flow configuration
 echo "Testing PKCE flow configuration..."
@@ -232,13 +232,13 @@ if [[ "$auth_url" != *"code_challenge_method=S256"* ]]; then
     exit 1
 fi
 
-echo "✅ PKCE authentication flow configured correctly"
+echo " PKCE authentication flow configured correctly"
 
 # Test 3: CLI tools functionality
 echo "Testing CLI tools..."
 cli_help_output=$(./tools/bazel-auth-simple --help 2>&1)
 if [[ "$cli_help_output" != *"PKCE"* ]]; then
-    echo "⚠️  CLI help doesn't mention PKCE (may be outdated)"
+    echo "CLI help doesn't mention PKCE (may be outdated)"
 fi
 
 cli_url_output=$(./tools/bazel-auth-simple --no-browser 2>/dev/null | head -1)
@@ -246,7 +246,7 @@ if [[ "$cli_url_output" != *"Starting"* ]]; then
     echo "❌ CLI tool not generating authentication flow"
     exit 1
 fi
-echo "✅ CLI tools working correctly"
+echo " CLI tools working correctly"
 
 # Test 4: Session endpoint
 echo "Testing session management..."
@@ -255,9 +255,9 @@ if [ "$session_response" != "405" ] && [ "$session_response" != "422" ]; then
     echo "❌ Session endpoint should return 405/422 for invalid requests"
     exit 1
 fi
-echo "✅ Session management working correctly"
+echo " Session management working correctly"
 
-echo "🎉 All OIDC authentication tests passed!"
+echo " All OIDC authentication tests passed!"
 ```
 
 ### Test 2: Team Isolation (`test-team-isolation.sh`)
@@ -274,7 +274,7 @@ echo "🎉 All OIDC authentication tests passed!"
 #!/bin/bash
 # tests/integration/test-team-isolation.sh
 
-echo "👥 Testing Team Access Isolation..."
+echo " Testing Team Access Isolation..."
 
 # Setup test secrets
 echo "Setting up team-specific test secrets..."
@@ -289,16 +289,16 @@ vault kv put kv/dev/backend/test-secret \
     database_url="postgresql://test-backend-db" \
     api_token="backend-test-token-67890"
 
-echo "✅ Test secrets created"
+echo " Test secrets created"
 
 # Note: Actual team token testing requires interactive authentication
-echo "📝 To complete this test:"
+echo " To complete this test:"
 echo "1. Authenticate as mobile team member via browser"
 echo "2. Verify access to kv/dev/mobile/* secrets only"
 echo "3. Confirm denial of access to kv/dev/backend/* secrets"
 echo "4. Repeat for backend team member"
 
-echo "🔍 Manual verification required for complete team isolation testing"
+echo " Manual verification required for complete team isolation testing"
 ```
 
 ### Test 3: User Identity (`test-user-identity.sh`)
@@ -315,7 +315,7 @@ echo "🔍 Manual verification required for complete team isolation testing"
 #!/bin/bash
 # tests/integration/test-user-identity.sh
 
-echo "👤 Testing User Identity Tracking..."
+echo " Testing User Identity Tracking..."
 
 # Test user session endpoint (requires authentication)
 echo "Testing user identity endpoints..."
@@ -324,13 +324,13 @@ echo "Testing user identity endpoints..."
 session_response=$(curl -s http://localhost:8081/session)
 echo "Session response structure: $session_response"
 
-echo "📝 To complete this test:"
+echo " To complete this test:"
 echo "1. Authenticate via Okta OIDC flow"
 echo "2. Check /session endpoint shows user email and groups"
 echo "3. Verify /user/info contains complete user profile"
 echo "4. Confirm audit logs show individual user attribution"
 
-echo "🔍 Manual verification required for user identity testing"
+echo " Manual verification required for user identity testing"
 ```
 
 ### Test 4: Full Workflow (`test-full-workflow.sh`)
@@ -348,7 +348,7 @@ echo "🔍 Manual verification required for user identity testing"
 #!/bin/bash
 # tests/integration/test-full-workflow.sh
 
-echo "🚀 Running Comprehensive Workflow Test..."
+echo " Running Comprehensive Workflow Test..."
 
 # Test 1: Service availability
 echo "Step 1: Checking service availability..."
@@ -360,7 +360,7 @@ for service in "${services[@]}"; do
         exit 1
     fi
 done
-echo "✅ All services are available"
+echo " All services are available"
 
 # Test 2: OIDC configuration
 echo "Step 2: Validating OIDC configuration..."
@@ -369,7 +369,7 @@ if [ -z "$oidc_config" ]; then
     echo "❌ Cannot retrieve Okta OIDC configuration"
     exit 1
 fi
-echo "✅ Okta OIDC configuration accessible"
+echo " Okta OIDC configuration accessible"
 
 # Test 3: Vault OIDC setup
 echo "Step 3: Checking Vault OIDC configuration..."
@@ -377,7 +377,7 @@ if ! vault auth list | grep -q "oidc"; then
     echo "❌ Vault OIDC auth method not enabled"
     exit 1
 fi
-echo "✅ Vault OIDC auth method configured"
+echo " Vault OIDC auth method configured"
 
 # Test 4: Team policies
 echo "Step 4: Verifying team policies..."
@@ -389,10 +389,10 @@ for team in "${teams[@]}"; do
         exit 1
     fi
 done
-echo "✅ All team policies configured"
+echo " All team policies configured"
 
-echo "🎉 Comprehensive workflow test completed successfully!"
-echo "📝 Manual authentication testing required for complete validation"
+echo " Comprehensive workflow test completed successfully!"
+echo " Manual authentication testing required for complete validation"
 ```
 
 ## 🔬 Unit Testing
@@ -528,7 +528,7 @@ python -m pytest unit/test_token_management.py -v
 python -m pytest unit/ -v -s --log-cli-level=DEBUG
 ```
 
-## ⚡ Performance Testing
+##  Performance Testing
 
 ### Concurrent Authentication Test
 
@@ -536,7 +536,7 @@ python -m pytest unit/ -v -s --log-cli-level=DEBUG
 #!/bin/bash
 # tests/performance/test-concurrent-auth.sh
 
-echo "⚡ Testing Concurrent Authentication Performance..."
+echo " Testing Concurrent Authentication Performance..."
 
 # Configuration
 CONCURRENT_USERS=10
@@ -564,7 +564,7 @@ simulate_auth() {
     
     local end_time=$(date +%s)
     local duration=$((end_time - start_time))
-    echo "✅ User $user_id: Auth simulation completed in ${duration}s"
+    echo " User $user_id: Auth simulation completed in ${duration}s"
 }
 
 # Run concurrent simulations
@@ -581,7 +581,7 @@ for pid in "${pids[@]}"; do
     wait $pid
 done
 
-echo "🎉 Concurrent authentication test completed"
+echo " Concurrent authentication test completed"
 ```
 
 ### Token Throughput Test
@@ -590,7 +590,7 @@ echo "🎉 Concurrent authentication test completed"
 #!/bin/bash
 # tests/performance/test-token-throughput.sh
 
-echo "🚀 Testing Token Creation Throughput..."
+echo " Testing Token Creation Throughput..."
 
 # Test parameters
 REQUESTS_PER_SECOND=5
@@ -610,7 +610,7 @@ test_token_performance() {
     local time_total=$(echo "$response" | grep -o "TIME:[0-9.]*" | cut -d: -f2)
     
     if [ "$http_code" = "200" ]; then
-        echo "✅ Request $request_id: Success (${time_total}s)"
+        echo " Request $request_id: Success (${time_total}s)"
     else
         echo "❌ Request $request_id: Failed (HTTP $http_code)"
     fi
@@ -630,10 +630,10 @@ done
 
 wait
 
-echo "🎉 Token throughput test completed"
+echo " Token throughput test completed"
 ```
 
-## 🔒 Security Testing
+##  Security Testing
 
 ### Authentication Bypass Test
 
@@ -641,7 +641,7 @@ echo "🎉 Token throughput test completed"
 #!/bin/bash
 # tests/security/test-auth-bypass.sh
 
-echo "🔒 Testing Authentication Bypass Scenarios..."
+echo " Testing Authentication Bypass Scenarios..."
 
 BROKER_URL="http://localhost:8081"
 VAULT_URL="http://localhost:8200"
@@ -650,7 +650,7 @@ VAULT_URL="http://localhost:8200"
 echo "Test 1: Attempting direct Vault access..."
 vault_response=$(curl -s -o /dev/null -w "%{http_code}" "$VAULT_URL/v1/kv/data/dev/mobile/test")
 if [ "$vault_response" = "403" ] || [ "$vault_response" = "401" ]; then
-    echo "✅ Vault properly denies unauthenticated access"
+    echo " Vault properly denies unauthenticated access"
 else
     echo "❌ Vault allows unauthenticated access (HTTP $vault_response)"
 fi
@@ -659,7 +659,7 @@ fi
 echo "Test 2: Testing invalid session handling..."
 session_response=$(curl -s -H "Cookie: session_id=invalid-session" "$BROKER_URL/session")
 if echo "$session_response" | grep -q "error\|unauthorized"; then
-    echo "✅ Broker properly handles invalid sessions"
+    echo " Broker properly handles invalid sessions"
 else
     echo "❌ Broker accepts invalid sessions"
 fi
@@ -668,12 +668,12 @@ fi
 echo "Test 3: Testing CSRF protection..."
 csrf_response=$(curl -s -X POST "$BROKER_URL/auth/callback" -d "code=test&state=invalid")
 if echo "$csrf_response" | grep -q "error\|invalid"; then
-    echo "✅ CSRF protection active"
+    echo " CSRF protection active"
 else
     echo "❌ Potential CSRF vulnerability"
 fi
 
-echo "🔐 Security tests completed"
+echo " Security tests completed"
 ```
 
 ### Privilege Escalation Test
@@ -682,33 +682,33 @@ echo "🔐 Security tests completed"
 #!/bin/bash
 # tests/security/test-privilege-escalation.sh
 
-echo "🛡️ Testing Privilege Escalation Protection..."
+echo "Testing Privilege Escalation Protection..."
 
 # Test 1: Team boundary enforcement
 echo "Test 1: Testing team boundary enforcement..."
-echo "📝 Manual test required:"
+echo " Manual test required:"
 echo "1. Authenticate as mobile team member"
 echo "2. Attempt to access backend team secrets"
 echo "3. Verify access is denied"
 
 # Test 2: Token scope verification
 echo "Test 2: Token scope verification..."
-echo "📝 Manual test required:"
+echo " Manual test required:"
 echo "1. Obtain team token via authentication"
 echo "2. Attempt to create additional tokens"
 echo "3. Verify token creation is denied"
 
 # Test 3: Admin operation blocking
 echo "Test 3: Admin operation blocking..."
-echo "📝 Manual test required:"
+echo " Manual test required:"
 echo "1. Use team token to attempt admin operations"
 echo "2. Try to modify Vault policies"
 echo "3. Verify operations are denied"
 
-echo "🔒 Privilege escalation tests completed"
+echo " Privilege escalation tests completed"
 ```
 
-## 🔧 Troubleshooting Tests
+##  Troubleshooting Tests
 
 ### Common Test Issues
 
@@ -779,7 +779,7 @@ vault kv delete kv/dev/frontend/test-secret
 # Clear test sessions (if applicable)
 curl -X DELETE http://localhost:8081/admin/sessions/test
 
-echo "✅ Test data cleanup completed"
+echo " Test data cleanup completed"
 ```
 
 ### Debugging Failed Tests
@@ -808,7 +808,7 @@ echo "✅ Test data cleanup completed"
    curl -v http://localhost:8200/v1/sys/health
    ```
 
-## 📈 Test Metrics and Reporting
+##  Test Metrics and Reporting
 
 ### Coverage Reports
 

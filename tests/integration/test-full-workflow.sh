@@ -4,7 +4,7 @@ set -euo pipefail
 # Comprehensive Integration Test Suite for Okta OIDC Authentication
 # This script runs all integration tests and provides a complete system verification
 
-echo "🚀 Bazel JWT Vault Demo - Comprehensive Integration Test Suite"
+echo " Bazel JWT Vault Demo - Comprehensive Integration Test Suite"
 echo "============================================================="
 
 # Configuration
@@ -28,11 +28,11 @@ FAILED_TESTS=()
 
 # Helper functions
 log_success() {
-    echo -e "${GREEN}✅ $1${NC}"
+    echo -e "${GREEN} $1${NC}"
 }
 
 log_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
+    echo -e "${YELLOW}$1${NC}"
 }
 
 log_error() {
@@ -40,11 +40,11 @@ log_error() {
 }
 
 log_info() {
-    echo -e "${BLUE}📋 $1${NC}"
+    echo -e "${BLUE} $1${NC}"
 }
 
 log_header() {
-    echo -e "${PURPLE}🧪 $1${NC}"
+    echo -e "${PURPLE} $1${NC}"
 }
 
 # Function to run a test and track results
@@ -60,7 +60,7 @@ run_test() {
     TESTS_RUN=$((TESTS_RUN + 1))
     
     if [[ "$interactive" == "true" ]]; then
-        echo "⚠️  This test requires interactive input"
+        echo "This test requires interactive input"
         echo "Do you want to run this test? (y/N)"
         read -r RUN_THIS_TEST
         
@@ -151,7 +151,7 @@ show_environment_info() {
         local okta_domain=$(echo "$home_response" | grep -o 'Domain:[^<]*' | cut -d' ' -f2 || echo "Not visible")
         local client_id=$(echo "$home_response" | grep -o 'Client ID:[^<]*' | cut -d' ' -f3 || echo "Not visible")
         
-        echo "🔐 Okta Configuration:"
+        echo " Okta Configuration:"
         echo "   Domain: $okta_domain"
         echo "   Client ID: $client_id"
         echo "   Broker URL: $BROKER_URL"
@@ -170,7 +170,7 @@ show_environment_info() {
     fi
     
     # Test configuration
-    echo "🧪 Test Configuration:"
+    echo " Test Configuration:"
     echo "   Test directory: $TEST_DIR"
     echo "   Available tests:"
     for test_file in "$TEST_DIR"/test-*.sh; do
@@ -311,22 +311,22 @@ run_e2e_workflow_test() {
 # Function to generate test report
 generate_test_report() {
     echo
-    echo "🎯 TEST SUITE EXECUTION SUMMARY"
+    echo " TEST SUITE EXECUTION SUMMARY"
     echo "==============================="
     
-    echo "📊 Test Statistics:"
+    echo " Test Statistics:"
     echo "   Total tests run: $TESTS_RUN"
     echo "   Tests passed: $TESTS_PASSED"
     echo "   Tests failed: $TESTS_FAILED"
     
     if [[ $TESTS_FAILED -eq 0 ]]; then
-        log_success "All tests passed! 🎉"
+        log_success "All tests passed! "
         echo
-        echo "✅ System Status: READY FOR PRODUCTION"
-        echo "✅ Okta OIDC authentication: WORKING"
-        echo "✅ Team-based access control: VERIFIED"
-        echo "✅ User identity management: FUNCTIONAL"
-        echo "✅ Vault integration: OPERATIONAL"
+        echo " System Status: READY FOR PRODUCTION"
+        echo " Okta OIDC authentication: WORKING"
+        echo " Team-based access control: VERIFIED"
+        echo " User identity management: FUNCTIONAL"
+        echo " Vault integration: OPERATIONAL"
     else
         log_error "Some tests failed"
         echo
@@ -335,7 +335,7 @@ generate_test_report() {
             echo "   - $failed_test"
         done
         echo
-        echo "🔧 Recommendations:"
+        echo " Recommendations:"
         echo "   1. Check Okta configuration and connectivity"
         echo "   2. Verify Vault OIDC auth method setup"
         echo "   3. Ensure all required Okta groups exist"
@@ -343,7 +343,7 @@ generate_test_report() {
     fi
     
     echo
-    echo "📚 Documentation:"
+    echo " Documentation:"
     echo "   Setup Guide: OKTA_SETUP.md"
     echo "   Architecture: docs/ARCHITECTURE.md"
     echo "   Troubleshooting: docs/DEVELOPMENT.md"

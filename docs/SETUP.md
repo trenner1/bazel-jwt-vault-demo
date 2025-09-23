@@ -1,8 +1,8 @@
-# 🚀 OIDC Enterprise Setup Guide
+#  OIDC Enterprise Setup Guide
 
 This guide provides comprehensive instructions for setting up the Enterprise OIDC authentication system with HashiCorp Vault and Okta integration.
 
-## 📋 Table of Contents
+##  Table of Contents
 
 - [Quick Start](#quick-start)
 - [Okta Configuration](#okta-configuration)
@@ -14,7 +14,7 @@ This guide provides comprehensive instructions for setting up the Enterprise OID
 - [Production Deployment](#production-deployment)
 - [Troubleshooting](#troubleshooting)
 
-## ⚡ Quick Start
+##  Quick Start
 
 For immediate setup with default configuration:
 
@@ -34,7 +34,7 @@ docker-compose up -d
 ./tools/bazel-auth-simple
 ```
 
-## 🔧 Okta Configuration
+##  Okta Configuration
 
 ### Prerequisites
 
@@ -56,8 +56,8 @@ docker-compose up -d
 3. **Grant Types & Redirects**
    ```
    Grant types allowed:
-   ✅ Authorization Code
-   ✅ Refresh Token
+    Authorization Code
+    Refresh Token
    
    Sign-in redirect URIs:
    http://localhost:5000/oidc/callback
@@ -70,7 +70,7 @@ docker-compose up -d
    ```
 
 4. **PKCE Configuration**
-   - **Proof Key for Code Exchange (PKCE)**: ✅ **Required**
+   - **Proof Key for Code Exchange (PKCE)**:  **Required**
    - **Client authentication**: Public client (PKCE only)
 
 ### Step 2: Create Team Groups
@@ -102,7 +102,7 @@ OKTA_DOMAIN=your-domain.okta.com
 OKTA_CLIENT_ID=0oa1a2b3c4d5e6f7g8h9
 ```
 
-## 🔧 Environment Setup
+##  Environment Setup
 
 ### Broker Configuration
 
@@ -170,7 +170,7 @@ services:
 | Broker | 5000 | OIDC authentication & callback |
 | Vault | 8200 | Secret management & token validation |
 
-## 🛠️ CLI Tools Setup
+## CLI Tools Setup
 
 The demo includes multiple CLI tools for different use cases:
 
@@ -213,7 +213,7 @@ Bazel wrapper that handles authentication automatically:
 ./tools/bazel-build test //tests/...
 ```
 
-## 👥 Team Configuration
+##  Team Configuration
 
 ### Automatic Team Mapping
 
@@ -265,7 +265,7 @@ vault/
 │       └── environments
 ```
 
-## 🧪 Testing & Validation
+##  Testing & Validation
 
 ### Quick Validation
 
@@ -315,7 +315,7 @@ curl -X POST http://localhost:5000/cli/start
 # - state (CSRF protection)
 ```
 
-## 🚀 Production Deployment
+##  Production Deployment
 
 ### Security Considerations
 
@@ -342,7 +342,7 @@ HTTPS_ONLY=true
 - **Vault HA**: Use Vault High Availability configuration for production
 - **Monitoring**: Implement health checks and metrics collection
 
-## 🔧 Troubleshooting
+##  Troubleshooting
 
 ### Common Issues
 
@@ -411,7 +411,7 @@ docker-compose logs -f broker
 - **Testing Guide**: `docs/TESTING.md`
 - **GitHub Issues**: Report issues with detailed logs and configuration
 
-## 📚 Additional Resources
+##  Additional Resources
 
 ### Documentation
 
@@ -430,14 +430,14 @@ docker-compose logs -f broker
 
 ---
 
-## 🎉 Success!
+##  Success!
 
 You now have a fully configured Enterprise OIDC authentication system with:
 
-- ✅ **Secure PKCE Authentication** with Okta integration
-- ✅ **Zero-dependency CLI Tools** for developer productivity  
-- ✅ **Team-based Access Control** via Okta groups
-- ✅ **Enhanced User Experience** with auto-copy callback page
-- ✅ **Production-ready Architecture** with proper security controls
+-  **Secure PKCE Authentication** with Okta integration
+-  **Zero-dependency CLI Tools** for developer productivity  
+-  **Team-based Access Control** via Okta groups
+-  **Enhanced User Experience** with auto-copy callback page
+-  **Production-ready Architecture** with proper security controls
 
 For ongoing maintenance and updates, refer to the comprehensive documentation in the `docs/` directory.
