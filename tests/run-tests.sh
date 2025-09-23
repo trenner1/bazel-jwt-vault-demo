@@ -1,7 +1,14 @@
 #!/bin/bash
 set -euo pipefail
 
-# Test Runner for Bazel JWT Vault Demo
+#     echo "1.  Okta Authentication Test (automated)"
+    echo "2.  CLI Tools Test (automated)"
+    echo "3.  Team Isolation Test (interactive)"
+    echo "4.  User Identity Test (interactive)"
+    echo "5.  Full Workflow Test (comprehensive)"
+    echo "6.  Run All Tests"
+    echo "7.  Help & Documentation"
+    echo "0.  Exit"ner for Bazel JWT Vault Demo
 # Simplified interface for running all integration tests
 
 echo " Bazel JWT Vault Demo - Test Runner"
@@ -52,7 +59,7 @@ run_single_test() {
         echo "$(printf '%*s' 50 '' | tr ' ' '-')"
         "$test_file"
     else
-        echo "❌ Test file not found: $test_file"
+        echo "Test file not found: $test_file"
     fi
 }
 
@@ -135,7 +142,7 @@ while true; do
             if [[ -f "$TEST_DIR/test-full-workflow.sh" ]]; then
                 "$TEST_DIR/test-full-workflow.sh"
             else
-                echo "❌ Comprehensive test suite not found"
+                echo "Comprehensive test suite not found"
             fi
             ;;
         7)
@@ -143,11 +150,11 @@ while true; do
             ;;
         0)
             echo
-            log_success "Thanks for testing! 👋"
+            log_success "Thanks for testing!"
             exit 0
             ;;
         *)
-            echo "❌ Invalid option. Please select 0-7."
+            echo "Invalid option. Please select 0-7."
             ;;
     esac
     

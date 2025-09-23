@@ -8,9 +8,6 @@ This comprehensive testing guide covers all aspects of testing the Enterprise OI
 - [Test Suite Overview](#test-suite-overview)
 - [Running Tests](#running-tests)
 - [Integration Tests](#integration-tests)
-- [Unit Testing](#unit-testing)
-- [Performance Testing](#performance-testing)
-- [Security Testing](#security-testing)
 - [Troubleshooting Tests](#troubleshooting-tests)
 
 ##  Testing Philosophy
@@ -21,13 +18,13 @@ Our testing strategy follows the testing pyramid principle:
          /\
         /  \
        /    \
-      / E2E  \     ← Few, high-value integration tests
+      /  E2E \        ← Few, high-value integration tests
      /_______ \
     /          \
-   / Integration \   ← Key workflow testing
+   / Integration\     ← Key workflow testing
   /______________\
  /                \
-/ Unit Tests      \  ← Many, fast, focused tests
+/    Unit Tests    \  ← Many, fast, focused tests
 \__________________/
 ```
 
@@ -46,32 +43,23 @@ Our testing strategy follows the testing pyramid principle:
 | Test Type | Location | Purpose | Frequency |
 |-----------|----------|---------|-----------|
 | **Integration** | `tests/integration/` | End-to-end OIDC flows | Manual/CI |
-| **Unit** | `tests/unit/` | Component testing | Pre-commit |
-| **Security** | `tests/security/` | Security validation | Weekly |
-| **Performance** | `tests/performance/` | Load testing | Release |
+| **Scripts** | `tests/scripts/` | Helper utilities | As needed |
 
 ### Test Files
 
 ```
 tests/
-├── run-tests.sh                      # Interactive test runner
-├── integration/                      # Integration test suites
+├── run-tests.sh                     # Interactive test runner
+├── integration/                     # Integration test suites
 │   ├── test-okta-auth.sh            # OIDC PKCE authentication flow
 │   ├── test-cli-tools.sh            # CLI tools validation
 │   ├── test-team-isolation.sh       # Team access control
 │   ├── test-user-identity.sh        # User identity tracking
 │   └── test-full-workflow.sh        # Comprehensive workflow
-├── unit/                             # Unit tests (Python)
-│   ├── test_token_management.py     # Token creation/validation
-│   ├── test_session_handling.py     # Session management
-│   └── test_vault_integration.py    # Vault client operations
-├── security/                         # Security test suites
-│   ├── test-auth-bypass.sh          # Authentication bypass attempts
-│   ├── test-privilege-escalation.sh # Privilege escalation tests
-│   └── test-token-abuse.sh          # Token abuse scenarios
-└── performance/                      # Performance test suites
-    ├── test-concurrent-auth.sh       # Concurrent authentication
-    └── test-token-throughput.sh      # Token creation throughput
+└── scripts/                          # Helper test scripts
+    ├── test-team-entities.sh         # Team entity verification
+    ├── test-team-jwt.sh              # JWT team testing
+    └── verify-team-entities.sh       # Team setup verification
 ```
 
 ##  Running Tests
@@ -87,22 +75,18 @@ The easiest way to run tests is using the interactive menu:
 This provides a menu-driven interface:
 
 ```
-╔════════════════════════════════════════╗
-║      Enterprise OIDC Test Suite        ║
-╠════════════════════════════════════════╣
-║                                        ║
-║  1.  Test Okta PKCE Authentication   ║
-║  2. Test CLI Tools                 ║
-║  3.  Test Team Isolation             ║
-║  4.  Test User Identity              ║
-║  5.  Run Full Workflow               ║
-║  6.  Run Security Tests              ║
-║  7.  Run Performance Tests           ║
-║  8.  Run All Tests                   ║
-║  9.  Debug Mode                      ║
-║  9. ❌ Exit                            ║
-║                                        ║
-╚════════════════════════════════════════╝
+ Bazel JWT Vault Demo - Test Runner
+=====================================
+
+ Available Test Suites:
+1.  Okta Authentication Test (automated)
+2.  CLI Tools Test (automated)
+3.  Team Isolation Test (interactive)
+4.  User Identity Test (interactive)
+5.  Full Workflow Test (comprehensive)
+6.  Run All Tests
+7.  Help & Documentation
+0.  Exit
 ```
 
 ### Command Line Execution
@@ -157,25 +141,25 @@ Ensure proper environment configuration:
 ```bash
 # Verify environment variables
 if [ -z "$OKTA_DOMAIN" ]; then
-    echo "❌ OKTA_DOMAIN not set"
+    echo "OKTA_DOMAIN not set"
     exit 1
 fi
 
 # Check service availability
 curl -f http://localhost:8081/health || {
-    echo "❌ Broker service not available"
+    echo "Broker service not available"
     exit 1
 }
 
 # Verify Vault connectivity  
 curl -f http://localhost:8200/v1/sys/health || {
-    echo "❌ Vault service not available"
+    echo "Vault service not available"
     exit 1
 }
 
 # Test CLI tools availability
 ./tools/bazel-auth-simple --help >/dev/null || {
-    echo "❌ CLI tools not executable"
+    echo "CLI tools not executable"
     exit 1
 }
 ```
@@ -202,7 +186,7 @@ echo " Testing Okta OIDC Authentication Flow..."
 echo "Testing broker health..."
 response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8081/health)
 if [ "$response" != "200" ]; then
-    echo "❌ Broker health check failed (HTTP $response)"
+    echo "Broker health check failed (HTTP $response)"
     exit 1
 fi
 echo " Broker is healthy"
@@ -214,20 +198,20 @@ auth_url=$(echo "$cli_start_response" | jq -r '.auth_url // empty')
 state=$(echo "$cli_start_response" | jq -r '.state // empty')
 
 if [[ "$auth_url" != *"${OKTA_DOMAIN}"* ]]; then
-    echo "❌ Okta auth URL not properly configured"
+    echo "Okta auth URL not properly configured"
     echo "Expected domain: $OKTA_DOMAIN"
     echo "Actual response: $cli_start_response"
     exit 1
 fi
 
 if [[ "$auth_url" != *"code_challenge="* ]]; then
-    echo "❌ PKCE code_challenge not found in auth URL"
+    echo "PKCE code_challenge not found in auth URL"
     echo "Auth URL: $auth_url"
     exit 1
 fi
 
 if [[ "$auth_url" != *"code_challenge_method=S256"* ]]; then
-    echo "❌ PKCE S256 method not configured"
+    echo "PKCE S256 method not configured"
     echo "Auth URL: $auth_url"
     exit 1
 fi
@@ -243,7 +227,7 @@ fi
 
 cli_url_output=$(./tools/bazel-auth-simple --no-browser 2>/dev/null | head -1)
 if [[ "$cli_url_output" != *"Starting"* ]]; then
-    echo "❌ CLI tool not generating authentication flow"
+    echo "CLI tool not generating authentication flow"
     exit 1
 fi
 echo " CLI tools working correctly"
@@ -252,7 +236,7 @@ echo " CLI tools working correctly"
 echo "Testing session management..."
 session_response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8081/exchange)
 if [ "$session_response" != "405" ] && [ "$session_response" != "422" ]; then
-    echo "❌ Session endpoint should return 405/422 for invalid requests"
+    echo "Session endpoint should return 405/422 for invalid requests"
     exit 1
 fi
 echo " Session management working correctly"
@@ -356,7 +340,7 @@ services=("http://localhost:8081/health" "http://localhost:8200/v1/sys/health")
 
 for service in "${services[@]}"; do
     if ! curl -f -s "$service" > /dev/null; then
-        echo "❌ Service unavailable: $service"
+        echo "Service unavailable: $service"
         exit 1
     fi
 done
@@ -366,7 +350,7 @@ echo " All services are available"
 echo "Step 2: Validating OIDC configuration..."
 oidc_config=$(curl -s "https://${OKTA_DOMAIN}/.well-known/openid_configuration")
 if [ -z "$oidc_config" ]; then
-    echo "❌ Cannot retrieve Okta OIDC configuration"
+    echo "Cannot retrieve Okta OIDC configuration"
     exit 1
 fi
 echo " Okta OIDC configuration accessible"
@@ -374,7 +358,7 @@ echo " Okta OIDC configuration accessible"
 # Test 3: Vault OIDC setup
 echo "Step 3: Checking Vault OIDC configuration..."
 if ! vault auth list | grep -q "oidc"; then
-    echo "❌ Vault OIDC auth method not enabled"
+    echo "Vault OIDC auth method not enabled"
     exit 1
 fi
 echo " Vault OIDC auth method configured"
@@ -385,7 +369,7 @@ teams=("mobile-team" "backend-team" "frontend-team" "devops-team")
 
 for team in "${teams[@]}"; do
     if ! vault policy read "$team" > /dev/null 2>&1; then
-        echo "❌ Team policy missing: $team"
+        echo "Team policy missing: $team"
         exit 1
     fi
 done
@@ -395,137 +379,7 @@ echo " Comprehensive workflow test completed successfully!"
 echo " Manual authentication testing required for complete validation"
 ```
 
-## 🔬 Unit Testing
-
-### Python Unit Tests
-
-Unit tests are written using pytest and focus on individual components:
-
-```python
-# tests/unit/test_token_management.py
-import pytest
-from unittest.mock import Mock, patch
-from broker.token_manager import TokenManager
-from broker.exceptions import VaultAuthError
-
-class TestTokenManager:
-    
-    @pytest.fixture
-    def token_manager(self):
-        return TokenManager(vault_url="http://test-vault:8200")
-    
-    @pytest.fixture
-    def mock_vault_client(self):
-        with patch('broker.token_manager.hvac.Client') as mock:
-            yield mock.return_value
-    
-    @pytest.mark.asyncio
-    async def test_create_team_token_success(self, token_manager, mock_vault_client):
-        # Given
-        user_info = {
-            "email": "alice@company.com",
-            "groups": ["mobile-developers"]
-        }
-        mock_vault_client.auth.oidc.login.return_value = {
-            "auth": {
-                "client_token": "hvs.EXAMPLE-TOKEN",
-                "entity_id": "entity_123"
-            }
-        }
-        
-        # When
-        result = await token_manager.create_team_token(user_info, "test-oidc-token")
-        
-        # Then
-        assert result["token"] == "hvs.EXAMPLE-TOKEN"
-        assert result["team"] == "mobile-team"
-        assert result["user_email"] == "alice@company.com"
-    
-    @pytest.mark.asyncio
-    async def test_create_team_token_vault_error(self, token_manager, mock_vault_client):
-        # Given
-        user_info = {"email": "alice@company.com", "groups": ["mobile-developers"]}
-        mock_vault_client.auth.oidc.login.side_effect = Exception("Vault connection error")
-        
-        # When & Then
-        with pytest.raises(VaultAuthError):
-            await token_manager.create_team_token(user_info, "test-oidc-token")
-    
-    def test_map_groups_to_team(self, token_manager):
-        # Test group to team mapping
-        assert token_manager.map_groups_to_team(["mobile-developers"]) == "mobile-team"
-        assert token_manager.map_groups_to_team(["backend-developers"]) == "backend-team"
-        assert token_manager.map_groups_to_team(["devops-team"]) == "devops-team"
-        
-        # Test multiple groups (should return highest priority)
-        assert token_manager.map_groups_to_team(["mobile-developers", "devops-team"]) == "devops-team"
-```
-
-### Session Management Tests
-
-```python
-# tests/unit/test_session_handling.py
-import pytest
-from unittest.mock import patch
-from fastapi.testclient import TestClient
-from broker.app import app
-
-class TestSessionHandling:
-    
-    @pytest.fixture
-    def client(self):
-        return TestClient(app)
-    
-    def test_session_creation(self, client):
-        # Test session creation after successful auth
-        with patch('broker.app.exchange_oidc_token') as mock_exchange:
-            mock_exchange.return_value = {
-                "user_email": "test@company.com",
-                "groups": ["mobile-developers"],
-                "vault_token": "hvs.EXAMPLE"
-            }
-            
-            response = client.post("/auth/callback", data={
-                "code": "test-auth-code",
-                "state": "test-state"
-            })
-            
-            assert response.status_code == 302  # Redirect after auth
-            assert "session_id" in response.cookies
-    
-    def test_session_validation(self, client):
-        # Test session validation
-        response = client.get("/session")
-        assert response.status_code == 401  # No session
-        
-        # Mock authenticated session
-        with client.session_transaction() as session:
-            session["user_email"] = "test@company.com"
-            session["vault_token"] = "hvs.EXAMPLE"
-            session["expires_at"] = "2024-12-31T23:59:59Z"
-        
-        response = client.get("/session")
-        assert response.status_code == 200
-        assert response.json()["user_email"] == "test@company.com"
-```
-
-### Running Unit Tests
-
-```bash
-# Install test dependencies
-pip install pytest pytest-asyncio pytest-mock
-
-# Run all unit tests
-cd tests && python -m pytest unit/ -v
-
-# Run with coverage
-python -m pytest unit/ --cov=broker --cov-report=html
-
-# Run specific test file
-python -m pytest unit/test_token_management.py -v
-
-# Run with debug output
-python -m pytest unit/ -v -s --log-cli-level=DEBUG
+##  Troubleshooting Tests
 ```
 
 ##  Performance Testing
@@ -551,14 +405,14 @@ simulate_auth() {
     # Test auth URL generation
     auth_url=$(curl -s "$BROKER_URL/auth/url" | jq -r '.auth_url')
     if [[ "$auth_url" != *"okta.com"* ]]; then
-        echo "❌ User $user_id: Auth URL generation failed"
+        echo "User $user_id: Auth URL generation failed"
         return 1
     fi
     
     # Test health endpoint
     health_response=$(curl -s -o /dev/null -w "%{http_code}" "$BROKER_URL/health")
     if [ "$health_response" != "200" ]; then
-        echo "❌ User $user_id: Health check failed"
+        echo "User $user_id: Health check failed"
         return 1
     fi
     
@@ -612,7 +466,7 @@ test_token_performance() {
     if [ "$http_code" = "200" ]; then
         echo " Request $request_id: Success (${time_total}s)"
     else
-        echo "❌ Request $request_id: Failed (HTTP $http_code)"
+        echo "Request $request_id: Failed (HTTP $http_code)"
     fi
 }
 
@@ -652,7 +506,7 @@ vault_response=$(curl -s -o /dev/null -w "%{http_code}" "$VAULT_URL/v1/kv/data/d
 if [ "$vault_response" = "403" ] || [ "$vault_response" = "401" ]; then
     echo " Vault properly denies unauthenticated access"
 else
-    echo "❌ Vault allows unauthenticated access (HTTP $vault_response)"
+    echo "Vault allows unauthenticated access (HTTP $vault_response)"
 fi
 
 # Test 2: Invalid session access
@@ -661,7 +515,7 @@ session_response=$(curl -s -H "Cookie: session_id=invalid-session" "$BROKER_URL/
 if echo "$session_response" | grep -q "error\|unauthorized"; then
     echo " Broker properly handles invalid sessions"
 else
-    echo "❌ Broker accepts invalid sessions"
+    echo "Broker accepts invalid sessions"
 fi
 
 # Test 3: CSRF protection
@@ -670,7 +524,7 @@ csrf_response=$(curl -s -X POST "$BROKER_URL/auth/callback" -d "code=test&state=
 if echo "$csrf_response" | grep -q "error\|invalid"; then
     echo " CSRF protection active"
 else
-    echo "❌ Potential CSRF vulnerability"
+    echo "Potential CSRF vulnerability"
 fi
 
 echo " Security tests completed"
