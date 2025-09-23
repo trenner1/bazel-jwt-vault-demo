@@ -403,9 +403,123 @@ networks:
 - **Alerting**: PagerDuty, Slack notifications
 
 ### API Interfaces
-- **REST APIs**: Standard HTTP REST interfaces
-- **Webhook Support**: Event-driven integrations
-- **GraphQL**: Rich query interface for complex operations
+
+The system exposes several API interfaces for different integration scenarios:
+
+#### JWT Broker REST API
+
+**Authentication Endpoints:**
+- `GET /` - Enhanced web interface with Okta login integration
+- `GET /auth/login` - Initiates PKCE authentication flow with Okta
+- `GET /auth/callback` - Handles Okta OIDC callback with enhanced UX
+- `GET /auth/select-team` - Team selection interface for multi-team users
+- `POST /auth/select-team` - Process team selection and generate session
+
+**Token Management:**
+- `POST /cli/start` - Initiates CLI-based PKCE flow with code challenge
+- `POST /exchange` - Exchanges session ID for team-scoped Vault tokens
+- `GET /health` - Health check endpoint for monitoring and load balancers
+
+**API Request/Response Examples:**
+
+```bash
+# CLI Authentication Start
+POST /cli/start
+Content-Type: application/json
+{}
+
+Response:
+{
+  "auth_url": "https://domain.okta.com/oauth2/.../authorize?...",
+  "state": "random-state-value",
+  "expires_in": 600
+}
+
+# Token Exchange
+POST /exchange  
+Content-Type: application/json
+{
+  "session_id": "sess_abc123...",
+  "pipeline": "ci-build-456",
+  "repo": "my-app-repo",
+  "target": "//apps:production"
+}
+
+Response:
+{
+  "vault_token": "hvs.CAESIJ...",
+  "ttl": 7200,
+  "uses_remaining": 10,
+  "policies": ["bazel-base", "bazel-mobile-team"],
+  "metadata": {
+    "team": "mobile-team",
+    "user": "developer@company.com",
+    "pipeline": "ci-build-456"
+  }
+}
+```
+
+#### Vault Integration APIs
+
+**JWT Authentication:**
+- Vault JWT auth method validates broker-generated RSA-signed tokens
+- Team-based entity creation with stable aliases
+- Policy assignment based on JWT subject claims
+
+**Secret Access Patterns:**
+```bash
+# Team-specific secrets
+GET /v1/kv/data/dev/mobile/*     # Mobile team secrets
+GET /v1/kv/data/dev/backend/*    # Backend team secrets
+GET /v1/kv/data/dev/shared/*     # Shared secrets (all teams)
+
+# User-specific secrets
+GET /v1/kv/data/dev/users/{email}/*  # Individual user secrets
+```
+
+#### Okta OIDC Integration
+
+**Standards Compliance:**
+- OpenID Connect 1.0 with Authorization Code Flow + PKCE
+- RFC 7636 PKCE implementation for security
+- JWT token validation using Okta's JWKS endpoint
+- Group claims for team membership determination
+
+**Integration Points:**
+- Okta Groups → Vault Roles mapping
+- User metadata → JWT claims → Vault token metadata
+- Multi-factor authentication support through Okta policies
+
+#### CLI Tool Interfaces
+
+**Zero-Dependency Tools:**
+- `bazel-auth-simple`: curl-based authentication (recommended)
+- `bazel-auth`: Python-based with advanced features
+- `bazel-build`: Bazel wrapper with automatic authentication
+
+**Environment Integration:**
+```bash
+# Environment variable export
+export VAULT_TOKEN="hvs.CAESIJ..."
+export VAULT_ADDR="http://vault:8200"
+
+# Shell integration
+eval $(./tools/bazel-auth-simple --session-id $SESSION --export)
+```
+
+#### Monitoring & Health APIs
+
+**Health Checks:**
+- `GET /health` - Application health status
+- Vault connectivity validation
+- Okta OIDC configuration verification
+- Database/session store health (if applicable)
+
+**Metrics Integration:**
+- Prometheus metrics endpoint (can be added)
+- Authentication success/failure rates
+- Token usage and expiration tracking
+- Team-based access pattern analytics
 - **gRPC**: High-performance internal communication
 
 ## References
