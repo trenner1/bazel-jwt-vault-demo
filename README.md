@@ -322,46 +322,56 @@ vault list identity/entity-alias/id
 
 ```
 bazel-jwt-vault-demo/
-├── README.md                    # This file (updated for OIDC)
-├── docker-compose.yml          # OIDC-enabled services
-├── Dockerfile                  # Broker container
-├── .env                        # Okta OIDC configuration
-├── .env.example               # Configuration template
-├── .gitignore                 # Git ignore patterns
-├── MODULE.bazel               # Bazel configuration
+├── README.md                         # This file (updated for OIDC)
+├── docker-compose.yml               # OIDC-enabled services
+├── Dockerfile                       # Broker container
+├── .env                             # Okta OIDC configuration
+├── .env.example                     # Configuration template
+├── .gitignore                       # Git ignore patterns
+├── MODULE.bazel                     # Bazel configuration
 │
-├── broker/                    # JWT broker implementation
-│   ├── app.py                # Team-based JWT broker with OIDC integration
-│   ├── gen_keys.py           # RSA key pair generation
-│   ├── jwt_signing_key       # RSA private key (generated)
-│   ├── jwt_signing_key.pub   # RSA public key (generated)
-│   ├── jwks.json            # JSON Web Key Set endpoint
-│   ├── signer_keys.json     # Key metadata for JWT signing
-│   ├── requirements.txt      # Python dependencies
-│   └── start.py              # Broker startup script
+├── broker/                          # JWT broker implementation
+│   ├── app.py                       # Team-based JWT broker with OIDC integration
+│   ├── gen_keys.py                  # RSA key pair generation
+│   ├── jwt_signing_key              # RSA private key (generated)
+│   ├── jwt_signing_key.pub          # RSA public key (generated)
+│   ├── jwks.json                    # JSON Web Key Set endpoint
+│   ├── signer_keys.json             # Key metadata for JWT signing
+│   ├── requirements.txt             # Python dependencies
+│   └── start.py                     # Broker startup script
 │
-├── vault/                     # Vault JWT configuration
-│   └── setup.sh              # Vault setup for broker-based JWT auth
+├── vault/                           # Vault JWT configuration
+│   └── setup.sh                     # Vault setup for broker-based JWT auth
 │
-├── tests/                     # Test suites (NEW)
-│   ├── run-tests.sh          # Test runner menu
-│   ├── integration/          # Integration tests
+├── tools/                           # CLI authentication tools
+│   ├── README.md                    # Tool documentation
+│   ├── bazel-auth-simple            # Zero-dependency CLI tool (recommended)
+│   ├── bazel-auth                   # Python-based authentication tool
+│   ├── bazel-build                  # Bazel wrapper with auto-auth
+│   └── requirements.txt             # Python dependencies for bazel-auth
+│
+├── tests/                           # Test suites
+│   ├── run-tests.sh                 # Test runner menu
+│   ├── integration/                 # Integration tests
 │   │   ├── test-okta-auth.sh        # OIDC authentication test
 │   │   ├── test-team-isolation.sh   # Team access control test
 │   │   ├── test-user-identity.sh    # User identity test
 │   │   └── test-full-workflow.sh    # Comprehensive test suite
-│   └── scripts/              # Test utilities
-│       └── verify-team-entities.sh
+│   └── scripts/                     # Test utilities
+│       └── verify-team-entities.sh  # Team entity verification script
 │
-├── scripts/                   # Utility scripts
-│   ├── start-broker.sh       # Broker startup (updated for JWT generation)
-│   └── docker-setup.sh       # Docker environment setup
+├── examples/                        # Usage examples
+│   └── bazel_auth_example.py        # Python authentication example
 │
-└── docs/                      # Documentation
-    ├── ARCHITECTURE.md        # System architecture
-    ├── DEVELOPMENT.md         # Development guide
-    ├── SETUP.md              # Complete setup guide
-    └── TESTING.md            # Testing procedures
+├── scripts/                         # Utility scripts
+│   ├── start-broker.sh              # Broker startup (updated for JWT generation)
+│   └── docker-setup.sh              # Docker environment setup
+│
+└── docs/                            # Documentation
+    ├── ARCHITECTURE.md              # System architecture
+    ├── DEVELOPMENT.md               # Development guide
+    ├── SETUP.md                     # Complete setup guide
+    └── TESTING.md                   # Testing procedures
 ```
 
 ##  License
