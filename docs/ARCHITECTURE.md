@@ -8,9 +8,13 @@ This document describes the system architecture of the Enterprise OIDC Vault Dem
 - [Component Architecture](#component-architecture)
 - [Authentication Flow](#authentication-flow)
 - [Team-Based Access Model](#team-based-access-model)
+- [CLI Tools Architecture](#cli-tools-architecture)
 - [Data Flow Diagrams](#data-flow-diagrams)
 - [Security Architecture](#security-architecture)
 - [Deployment Architecture](#deployment-architecture)
+- [Performance Characteristics](#performance-characteristics)
+- [Integration Points](#integration-points)
+- [References](#references)
 
 ## Overview
 
@@ -32,7 +36,7 @@ The system implements an enterprise-grade authentication architecture using:
 6. **Audit Transparency**: Complete audit trail with real user identity
 7. **Scalable Design**: Supports growing teams and environments
 
-##  Component Architecture
+## Component Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -190,26 +194,6 @@ devops-team           →     entity_devops_team     →    kv/dev/*
 3. **Session ID Management**: Clear session exchange workflow
 4. **Environment Integration**: Direct export to shell environment
 5. **Pipeline Metadata**: Automatic inclusion of build context
-
-## Team-Based Access Model
-
-Teams are automatically assigned based on Okta group membership:
-
-### Group → Role → Policy Mapping
-
-1. **User Authentication**: User authenticates via Okta OIDC with PKCE
-2. **Group Resolution**: Okta returns user's group memberships
-3. **Role Assignment**: Vault JWT auth method maps groups to roles
-4. **Policy Application**: Team-specific policies applied to tokens
-5. **Secret Access**: User can access team-scoped secrets only
-
-### Team Isolation
-
-Teams are completely isolated through:
-- **Separate Roles**: Each team has dedicated Vault JWT role
-- **Scoped Policies**: Policies only allow access to team paths
-- **Group-Based Assignment**: Automatic team assignment via Okta groups
-- **Audit Separation**: Team activities logged with user identity
 
 ## Data Flow Diagrams
 
