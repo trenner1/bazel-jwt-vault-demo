@@ -142,7 +142,7 @@ Okta Groups                  Vault Entities              Secret Paths
 mobile-developers     →     entity_mobile_team     →    kv/dev/mobile/*
 backend-developers    →     entity_backend_team    →    kv/dev/backend/*
 frontend-developers   →     entity_frontend_team   →    kv/dev/frontend/*
-devops-team          →     entity_devops_team     →    kv/dev/*
+devops-team           →     entity_devops_team     →    kv/dev/*
 ```
 
 ### Policy Resolution
@@ -319,33 +319,40 @@ User Request
 ### Development Environment
 
 ```yaml
-version: '3.8'
 services:
   broker:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bazel-broker
     ports:
       - "8081:8081"
     environment:
-      - OKTA_DOMAIN=${OKTA_DOMAIN}
-      - OKTA_CLIENT_ID=${OKTA_CLIENT_ID}
-      - OKTA_CLIENT_SECRET=${OKTA_CLIENT_SECRET}
-      - VAULT_ADDR=http://vault:8200
+      VAULT_ADDR: ${VAULT_ADDR:-http://vault:8200}
+      VAULT_ROOT_TOKEN: ${VAULT_ROOT_TOKEN}
+      OKTA_DOMAIN: ${OKTA_DOMAIN}
+      OKTA_CLIENT_ID: ${OKTA_CLIENT_ID}
+      OKTA_CLIENT_SECRET: ${OKTA_CLIENT_SECRET}
+      OKTA_AUTH_SERVER_ID: ${OKTA_AUTH_SERVER_ID}
+      OKTA_REDIRECT_URI: ${OKTA_REDIRECT_URI:-http://localhost:8081/auth/callback}
     networks:
-      - vault-network
+      - jenkins-vault-poc_default
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    env_file:
+      - .env
 
-  vault:
-    image: vault:latest
-    ports:
-      - "8200:8200"
-    environment:
-      - VAULT_DEV_ROOT_TOKEN_ID=${VAULT_ROOT_TOKEN}
-    networks:
-      - vault-network
-
+# Use external network from existing Jenkins/Vault setup
 networks:
-  vault-network:
-    driver: bridge
+  jenkins-vault-poc_default:
+    external: true
 ```
+
+**Note**: This configuration assumes HashiCorp Vault is already running in another container on the `jenkins-vault-poc_default` network. The broker connects to an existing Vault instance rather than managing its own Vault service.
 
 ### Production Considerations
 
