@@ -11,6 +11,9 @@ echo "========================================"
 BROKER_URL="http://localhost:8081"
 VAULT_ADDR="http://localhost:8200"
 
+# Get project root directory (assuming we're running from tests/integration/)
+PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -92,18 +95,18 @@ echo
 log_info "Test 3: CLI Tools Availability" 
 echo "------------------------------"
 
-if [[ -x "./tools/bazel-auth-simple" ]]; then
+if [[ -x "$PROJECT_ROOT/tools/bazel-auth-simple" ]]; then
     log_success "bazel-auth-simple tool is executable"
     
-    CLI_OUTPUT=$(./tools/bazel-auth-simple --help 2>&1 || echo "error")
+    CLI_OUTPUT=$("$PROJECT_ROOT/tools/bazel-auth-simple" --help 2>&1 || echo "error")
     if [[ "$CLI_OUTPUT" != *"error"* ]]; then
         log_success "bazel-auth-simple help output available"
     else
         log_warning "bazel-auth-simple help output error"
     fi
     
-    CLI_TEST_OUTPUT=$(./tools/bazel-auth-simple --no-browser 2>/dev/null | head -1 || echo "error")
-    if [[ "$CLI_TEST_OUTPUT" == *"Starting"* ]]; then
+    CLI_TEST_OUTPUT=$("$PROJECT_ROOT/tools/bazel-auth-simple" --no-browser 2>&1 | head -1 || echo "error")
+    if [[ "$CLI_TEST_OUTPUT" == *"Starting"* ]] || [[ "$CLI_TEST_OUTPUT" == *"https://"* ]]; then
         log_success "bazel-auth-simple generates authentication flow"
     else
         log_error "bazel-auth-simple not generating authentication flow"
@@ -112,7 +115,7 @@ else
     log_error "bazel-auth-simple tool not found or not executable"
 fi
 
-if [[ -x "./tools/bazel-build" ]]; then
+if [[ -x "$PROJECT_ROOT/tools/bazel-build" ]]; then
     log_success "bazel-build wrapper available"
 else
     log_warning "bazel-build wrapper not found"

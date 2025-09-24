@@ -259,7 +259,7 @@ def generate_team_based_jwt(user_info: Dict[str, Any], team: str) -> str:
     payload = {
         "iss": "bazel-auth-broker",  # Issuer
         "sub": team,                 # Subject = team name (creates team-based entities)
-        "aud": OKTA_CLIENT_ID,      # Audience 
+        "aud": "bazel-vault",       # Audience - must match Vault's bound_audiences
         "iat": int(now.timestamp()), # Issued at
         "exp": int((now + datetime.timedelta(hours=2)).timestamp()), # Expires
         "user": user_info.get("email", "unknown@example.com"),

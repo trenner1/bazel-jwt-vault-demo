@@ -1,14 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-#     echo "1.  Okta Authentication Test (automated)"
-    echo "2.  CLI Tools Test (automated)"
-    echo "3.  Team Isolation Test (interactive)"
-    echo "4.  User Identity Test (interactive)"
-    echo "5.  Full Workflow Test (comprehensive)"
-    echo "6.  Run All Tests"
-    echo "7.  Help & Documentation"
-    echo "0.  Exit"ner for Bazel JWT Vault Demo
+# Test Runner for Bazel JWT Vault Demo
 # Simplified interface for running all integration tests
 
 echo " Bazel JWT Vault Demo - Test Runner"
@@ -39,13 +32,13 @@ show_menu() {
     echo
     log_info "Available Test Suites:"
     echo "1.  Okta Authentication Test (automated)"
-    echo "2. �  CLI Tools Test (automated)"
-    echo "3. � Team Isolation Test (interactive)"
+    echo "2.  CLI Tools Test (automated)"
+    echo "3.  Team Isolation Test (interactive)"
     echo "4.  User Identity Test (interactive)"
     echo "5.  Full Workflow Test (comprehensive)"
     echo "6.  Run All Tests"
-    echo "7. ❓ Help & Documentation"
-    echo "0. Exit"
+    echo "7.  Help & Documentation"
+    echo "0.  Exit"
     echo
 }
 
@@ -57,6 +50,14 @@ run_single_test() {
         echo
         log_info "Running: $test_name"
         echo "$(printf '%*s' 50 '' | tr ' ' '-')"
+        
+        # Source environment variables if .env exists
+        if [[ -f "../.env" ]]; then
+            set -a  # automatically export all variables
+            source "../.env"
+            set +a  # stop automatically exporting
+        fi
+        
         "$test_file"
     else
         echo "Test file not found: $test_file"
@@ -114,7 +115,7 @@ show_help() {
 # Main menu loop
 while true; do
     show_menu
-    echo -n "Select an option (0-6): "
+    echo -n "Select an option (0-7): "
     read -r choice
     
     case $choice in

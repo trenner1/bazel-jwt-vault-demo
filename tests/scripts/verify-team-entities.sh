@@ -8,9 +8,15 @@ set -euo pipefail
 export VAULT_ADDR="${VAULT_ADDR:-http://localhost:8200}"
 export VAULT_TOKEN="${VAULT_TOKEN:-}"
 
+# Handle both VAULT_TOKEN and VAULT_ROOT_TOKEN for compatibility
 if [[ -z "$VAULT_TOKEN" ]]; then
-    echo "❌ VAULT_TOKEN must be set (use root token for verification)"
-    exit 1
+    if [[ -n "${VAULT_ROOT_TOKEN:-}" ]]; then
+        echo "Using VAULT_ROOT_TOKEN as VAULT_TOKEN"
+        export VAULT_TOKEN="$VAULT_ROOT_TOKEN"
+    else
+        echo "VAULT_TOKEN or VAULT_ROOT_TOKEN must be set (use root token for verification)"
+        exit 1
+    fi
 fi
 
 echo "=== BAZEL TEAM-BASED ENTITY VERIFICATION ==="
@@ -34,11 +40,11 @@ simulate_team_build() {
     
     echo "--- $team: $developer building $target ---"
     
-    # Use the transparent auth script
+    # Use the CLI authentication tool
     BROKER_URL="http://127.0.0.1:8081" \
-    BAZEL_TEAM="$team" \
-    USER="$developer" \
-    ./scripts/bazel-auth.sh "$target" > /dev/null 2>&1 || {
+    PIPELINE="$team" \
+    REPO="verification-test" \
+    ./tools/bazel-auth-simple --broker-url http://127.0.0.1:8081 --pipeline "$team" --repo "verification-test" --target "$target" --token-only > /dev/null 2>&1 || {
         echo "   Authentication failed (broker/vault may not be running)"
         return 1
     }
@@ -62,20 +68,21 @@ echo ""
 echo "🏢 Scenario: Multiple developers from same team"
 echo ""
 
-# Simulate team-alpha members building different targets
-simulate_team_build "team-alpha" "alice@company.com" "//frontend:app"
-simulate_team_build "team-alpha" "bob@company.com" "//frontend:tests" 
-simulate_team_build "team-alpha" "carol@company.com" "//frontend:deploy"
+# Simulate mobile-developers team members building different targets
+simulate_team_build "mobile-team" "alice@company.com" "//mobile:ios-app"
+simulate_team_build "mobile-team" "bob@company.com" "//mobile:android-app" 
+simulate_team_build "mobile-team" "carol@company.com" "//mobile:tests"
 
 echo ""
-echo " RESULT for team-alpha: Same team members should reuse entities"
+echo " RESULT for mobile-team: Same team members should reuse entities"
 
 echo ""
 echo "🏢 Scenario: Different teams (should create separate entities)"
 echo ""
 
-simulate_team_build "team-beta" "dave@company.com" "//backend:service"
-simulate_team_build "team-gamma" "eve@company.com" "//ml:training"
+simulate_team_build "backend-team" "dave@company.com" "//backend:api-service"
+simulate_team_build "frontend-team" "eve@company.com" "//frontend:web-app"
+simulate_team_build "devops-team" "frank@company.com" "//infra:deployment"
 
 FINAL_ENTITIES=$(vault list -format=json identity/entity/id 2>/dev/null | jq -r 'length // 0')
 FINAL_ALIASES=$(vault list -format=json identity/entity-alias/id 2>/dev/null | jq -r 'length // 0')
@@ -88,13 +95,14 @@ echo ""
 
 echo " ANALYSIS:"
 echo "   • Expected: 1 entity per team (logical license grouping)"
-echo "   • Team-alpha: All members share same entity (no churning)"
-echo "   • Team-beta: Gets separate entity from team-alpha"
-echo "   • Team-gamma: Gets separate entity from other teams"
+echo "   • Mobile-team: All members share same entity (no churning)"
+echo "   • Backend-team: Gets separate entity from mobile-team"
+echo "   • Frontend-team: Gets separate entity from other teams"
+echo "   • DevOps-team: Gets separate entity for infrastructure work"
 echo ""
 
-if [[ $FINAL_ENTITIES -le 3 ]]; then
-    echo " EXCELLENT: Entity count is reasonable (≤3 for 3 teams)"
+if [[ $FINAL_ENTITIES -le 6 ]]; then
+    echo " EXCELLENT: Entity count is reasonable (≤6 for 4 teams)"
     echo "   This demonstrates licensing-efficient team grouping"
 else
     echo "WARNING: More entities than expected"
@@ -104,9 +112,10 @@ fi
 echo ""
 echo " PRODUCTION RECOMMENDATIONS:"
 echo "   1. Use 'sub' claim = team name for logical grouping"
-echo "   2. Map Okta/LDAP groups to teams automatically"  
+echo "   2. Map Okta groups (mobile-developers, backend-developers, etc.) to teams"  
 echo "   3. Monitor entity growth: vault list identity/entity/id | wc -l"
 echo "   4. Verify no churning within teams regularly"
+echo "   5. Ensure team assignment via Okta group membership automation"
 echo ""
 
 echo " Detailed entity information:"

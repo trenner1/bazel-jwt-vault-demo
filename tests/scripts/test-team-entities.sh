@@ -1,14 +1,33 @@
 #!/bin/bash
 set -euo pipefail
 
-# Test script to prove team-based entity creation
+# Interactive Test script to prove team-based entity creation
 # This script demonstrates that users from the same team share entities
+# REQUIRES: Real Okta users to authenticate through the browser
 
 export VAULT_ADDR=http://localhost:8200
-export VAULT_TOKEN=${VAULT_TOKEN:-"your-vault-root-token-here"}
+export VAULT_TOKEN=${VAULT_TOKEN:-}
 
-echo " TESTING TEAM-BASED ENTITY CREATION"
-echo "====================================="
+# Handle both VAULT_TOKEN and VAULT_ROOT_TOKEN for compatibility
+if [[ -z "$VAULT_TOKEN" ]]; then
+    if [[ -n "${VAULT_ROOT_TOKEN:-}" ]]; then
+        echo "Using VAULT_ROOT_TOKEN as VAULT_TOKEN"
+        export VAULT_TOKEN="$VAULT_ROOT_TOKEN"
+    else
+        echo "VAULT_TOKEN or VAULT_ROOT_TOKEN must be set"
+        exit 1
+    fi
+fi
+
+echo " INTERACTIVE TEAM-BASED ENTITY TESTING"
+echo "======================================="
+echo
+echo "This test requires REAL users from your Okta account to authenticate."
+echo "You'll need users assigned to these Okta groups:"
+echo "  - mobile-developers"
+echo "  - backend-developers"
+echo "  - frontend-developers"
+echo "  - devops-team"
 echo
 
 echo " Initial state:"
@@ -16,100 +35,113 @@ INITIAL_ENTITIES=$(vault list -format=json identity/entity/id 2>/dev/null | jq -
 echo "   Entities: $INITIAL_ENTITIES"
 echo
 
-# Create a simple JWT token for testing
-# In reality this would come from Okta, but we'll create a minimal one for testing
-create_test_jwt() {
-    local groups="$1"
-    local email="$2"
+# Function for interactive user authentication
+interactive_auth_test() {
+    local team="$1"
+    local team_name="$2"
+    local user_prompt="$3"
     
-    # Simple JWT payload (this is just for testing - in production this comes from Okta)
-    local header='{"alg":"none","typ":"JWT"}'
-    local payload=$(echo "{\"email\":\"$email\",\"groups\":[$groups],\"aud\":\"0oavom81m9J0lBtxq697\",\"exp\":$(($(date +%s) + 3600))}" | base64 -w 0 | tr -d '=')
-    local signature=""
-    
-    echo "$header.$payload.$signature"
-}
-
-# Test function to authenticate with Vault using JWT
-test_jwt_auth() {
-    local groups="$1"
-    local email="$2"
-    local role="$3"
-    local description="$4"
-    
-    echo " Testing: $description"
-    echo "   Email: $email"
-    echo "   Groups: $groups"
-    echo "   Role: $role"
-    
-    # Create test JWT (normally this would come from Okta)
-    local jwt_token=$(create_test_jwt "$groups" "$email")
-    
-    # Attempt to authenticate with Vault
-    local auth_response=$(curl -s -X POST "$VAULT_ADDR/v1/auth/jwt/login" \
-        -d "{\"jwt\":\"$jwt_token\",\"role\":\"$role\"}" 2>/dev/null || echo '{"errors":["auth_failed"]}')
-    
-    if echo "$auth_response" | jq -e '.auth.client_token' > /dev/null 2>&1; then
-        local vault_token=$(echo "$auth_response" | jq -r '.auth.client_token')
-        local entity_id=$(echo "$auth_response" | jq -r '.auth.entity_id // "none"')
-        
-        echo "    Authentication successful"
-        echo "    Entity ID: $entity_id"
-        echo "   🎫 Token: ${vault_token:0:20}..."
-        echo "   $entity_id"  # Return entity ID for comparison
-    else
-        echo "   ❌ Authentication failed"
-        echo "   Error: $(echo "$auth_response" | jq -r '.errors[0] // "unknown"')"
-        echo "   none"
-    fi
+    echo "=== $team_name Team Authentication ==="
     echo
+    echo "$user_prompt"
+    echo
+    echo "Steps:"
+    echo "1. Open browser to: http://localhost:8081/auth/url"
+    echo "2. Complete Okta authentication"
+    echo "3. Check that you're in the '$team_name' group in Okta"
+    echo "4. Return here after authentication"
+    echo
+    
+    read -p "Press Enter when ready to check authentication results..."
+    
+    # Check if there are any active sessions for this team
+    echo "Checking current Vault entities..."
+    
+    CURRENT_ENTITIES=$(vault list -format=json identity/entity/id 2>/dev/null | jq -r 'length // 0')
+    
+    echo "   Current entities: $CURRENT_ENTITIES"
+    echo "   Change from initial: +$((CURRENT_ENTITIES - INITIAL_ENTITIES))"
+    
+    return $CURRENT_ENTITIES
 }
 
-echo "🏢 SCENARIO 1: Multiple users from mobile-developers team"
-echo "----------------------------------------------------"
+# Store entity counts for analysis
+declare -a entity_counts=()
 
-# Test users from same team
-entity1=$(test_jwt_auth '"mobile-developers"' "alice@company.com" "mobile-team" "Alice from mobile team")
-entity2=$(test_jwt_auth '"mobile-developers"' "bob@company.com" "mobile-team" "Bob from mobile team") 
-entity3=$(test_jwt_auth '"mobile-developers"' "carol@company.com" "mobile-team" "Carol from mobile team")
+echo "SCENARIO 1: Multiple users from mobile-developers group"
+echo "-------------------------------------------------------"
+echo
 
-echo " ANALYSIS:"
-if [[ "$entity1" != "none" && "$entity1" == "$entity2" && "$entity2" == "$entity3" ]]; then
-    echo "    SUCCESS: All mobile team members share the same entity!"
-    echo "    Shared Entity ID: $entity1"
+interactive_auth_test "mobile-team" "Mobile" "Have a user from the 'mobile-developers' Okta group authenticate:"
+entity_counts+=($(vault list -format=json identity/entity/id 2>/dev/null | jq -r 'length // 0'))
+
+echo
+read -p "Have ANOTHER user from 'mobile-developers' authenticate, then press Enter..."
+MOBILE_2_ENTITIES=$(vault list -format=json identity/entity/id 2>/dev/null | jq -r 'length // 0')
+entity_counts+=($MOBILE_2_ENTITIES)
+echo "   Entities after 2nd mobile user: $MOBILE_2_ENTITIES"
+
+echo
+echo " MOBILE TEAM ANALYSIS:"
+if [[ ${entity_counts[1]} -eq ${entity_counts[0]} ]]; then
+    echo "    ✅ SUCCESS: Second mobile user REUSED existing entity!"
+    echo "    This demonstrates licensing efficiency within teams."
 else
-    echo "   ❌ FAILURE: Team members have different entities"
-    echo "    Entity IDs: $entity1, $entity2, $entity3"
+    echo "    ❌ ISSUE: Second mobile user created a new entity"
+    echo "    Check team assignment and entity configuration."
 fi
 echo
 
-echo "🏢 SCENARIO 2: User from different team"
-echo "--------------------------------------"
+echo "SCENARIO 2: User from different team (backend-developers)"
+echo "--------------------------------------------------------"
+echo
 
-entity4=$(test_jwt_auth '"backend-developers"' "dave@company.com" "backend-team" "Dave from backend team")
+read -p "Have a user from 'backend-developers' authenticate, then press Enter..."
+BACKEND_ENTITIES=$(vault list -format=json identity/entity/id 2>/dev/null | jq -r 'length // 0')
+entity_counts+=($BACKEND_ENTITIES)
 
-echo " ANALYSIS:"
-if [[ "$entity4" != "none" && "$entity4" != "$entity1" ]]; then
-    echo "    SUCCESS: Backend team has separate entity from mobile team!"
-    echo "    Mobile Entity: $entity1"
-    echo "    Backend Entity: $entity4"
+echo "   Entities after backend user: $BACKEND_ENTITIES"
+echo
+
+echo " CROSS-TEAM ANALYSIS:"
+if [[ $BACKEND_ENTITIES -gt ${entity_counts[1]} ]]; then
+    echo "    ✅ SUCCESS: Backend team created separate entity from mobile!"
+    echo "    This demonstrates proper team isolation."
 else
-    echo "   ❌ FAILURE: Backend team entity issue"
-    echo "    Backend Entity: $entity4"
+    echo "    ❌ ISSUE: Backend user didn't create separate entity"
+    echo "    Check team isolation configuration."
 fi
 echo
 
-echo " Final state:"
+echo " FINAL RESULTS:"
 FINAL_ENTITIES=$(vault list -format=json identity/entity/id 2>/dev/null | jq -r 'length // 0')
-echo "   Entities: $FINAL_ENTITIES"
+echo "   Initial entities: $INITIAL_ENTITIES"
+echo "   Final entities: $FINAL_ENTITIES"
+echo "   Entities created: $((FINAL_ENTITIES - INITIAL_ENTITIES))"
 echo
 
-if [[ $FINAL_ENTITIES -eq 2 ]]; then
-    echo " PERFECT: 2 entities created (1 per team) instead of 4 (1 per user)"
-    echo "   💰 Licensing efficiency achieved!"
+echo " IDEAL BEHAVIOR:"
+echo "   • Users within same team → Share entity (licensing efficiency)"
+echo "   • Users from different teams → Separate entities (team isolation)"
+echo "   • Expected entities created: ≤ number of teams tested"
+echo
+
+if [[ $((FINAL_ENTITIES - INITIAL_ENTITIES)) -le 2 ]]; then
+    echo " ✅ EXCELLENT: Entity growth is efficient!"
+    echo "   Created ≤2 entities for 2 teams tested"
 else
-    echo "Expected 2 entities (1 per team), got $FINAL_ENTITIES"
+    echo " ⚠️  REVIEW NEEDED: More entities created than expected"
+    echo "   Consider reviewing team assignment logic"
 fi
 
 echo
-echo "✨ Team-based entity test complete!"
+echo " To test more teams, run additional authentication tests with:"
+echo "   - frontend-developers group users"
+echo "   - devops-team group users"
+echo
+echo " View detailed entity information:"
+echo "   vault list identity/entity/id"
+echo "   vault read identity/entity/id/<entity-id>"
+
+echo
+echo "✨ Interactive team entity test complete!"

@@ -35,7 +35,7 @@ log_error() {
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 TOOLS_DIR="$PROJECT_ROOT/tools"
-BROKER_URL="${BROKER_URL:-http://localhost:5000}"
+BROKER_URL="${BROKER_URL:-http://localhost:8081}"
 VAULT_URL="${VAULT_URL:-http://localhost:8200}"
 
 echo "CLI TOOLS AUTHENTICATION TEST"
@@ -140,13 +140,13 @@ if [[ -x "bazel-auth-simple" ]]; then
     echo "Testing bazel-auth-simple PKCE flow initiation..."
     
     # Test non-interactive mode to avoid opening browser
-    CLI_OUTPUT=$(timeout 10s ./bazel-auth-simple --no-browser 2>&1 | head -10 || echo "timeout")
+    CLI_OUTPUT=$(./bazel-auth-simple --no-browser 2>&1 | head -10 || echo "error")
     
-    if echo "$CLI_OUTPUT" | grep -q "Starting OIDC"; then
+    if echo "$CLI_OUTPUT" | grep -q "Starting Bazel authentication"; then
         log_success "bazel-auth-simple initiates OIDC flow"
         
-        if echo "$CLI_OUTPUT" | grep -q "PKCE"; then
-            log_success "bazel-auth-simple mentions PKCE flow"
+        if echo "$CLI_OUTPUT" | grep -q "code_challenge_method=S256"; then
+            log_success "bazel-auth-simple uses PKCE flow (S256)"
         else
             log_info "PKCE flow implicit in output"
         fi
@@ -159,10 +159,11 @@ if [[ -x "bazel-auth-simple" ]]; then
         
         # Check for auth URL generation
         if echo "$CLI_OUTPUT" | grep -q "http"; then
-            AUTH_URL=$(echo "$CLI_OUTPUT" | grep -o 'http[s]*://[^[:space:]]*' | head -1)
+            # Extract the full URL from the output, handling line breaks
+            AUTH_URL=$(echo "$CLI_OUTPUT" | grep -A5 -B5 "http" | tr -d '\n' | grep -o 'https://[^[:space:]]*' | head -1)
             log_success "Generated authentication URL: ${AUTH_URL:0:80}..."
             
-            # Verify PKCE parameters in URL
+            # Verify PKCE parameters in full URL
             if [[ "$AUTH_URL" == *"code_challenge="* ]]; then
                 log_success "Auth URL contains PKCE code_challenge parameter"
             else
@@ -194,8 +195,8 @@ if [[ -x "bazel-auth-simple" ]]; then
     echo "Testing bazel-auth-simple error handling..."
     
     # Test invalid broker URL
-    INVALID_BROKER_TEST=$(BROKER_URL="http://invalid-broker:9999" timeout 5s ./bazel-auth-simple --no-browser 2>&1 || echo "expected_error")
-    if echo "$INVALID_BROKER_TEST" | grep -q "Connection\|refused\|timeout\|error"; then
+    INVALID_BROKER_TEST=$(BROKER_URL="http://invalid-broker:9999" ./bazel-auth-simple --no-browser 2>&1 | head -5 || echo "expected_error")
+    if echo "$INVALID_BROKER_TEST" | grep -q "Connection\|refused\|error"; then
         log_success "bazel-auth-simple handles connection errors gracefully"
     else
         log_warning "bazel-auth-simple error handling unclear"
