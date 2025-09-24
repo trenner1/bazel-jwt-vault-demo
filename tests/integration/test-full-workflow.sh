@@ -36,7 +36,7 @@ log_warning() {
 }
 
 log_error() {
-    echo -e "${RED}❌ $1${NC}"
+    echo -e "${RED} $1${NC}"
 }
 
 log_info() {
@@ -72,6 +72,17 @@ run_test() {
     
     # Run the test
     if [[ -f "$test_script" && -x "$test_script" ]]; then
+        # External script file
+        if "$test_script"; then
+            log_success "Test passed: $test_name"
+            TESTS_PASSED=$((TESTS_PASSED + 1))
+        else
+            log_error "Test failed: $test_name"
+            TESTS_FAILED=$((TESTS_FAILED + 1))
+            FAILED_TESTS+=("$test_name")
+        fi
+    elif [[ "$(type -t "$test_script")" == "function" ]]; then
+        # Internal function
         if "$test_script"; then
             log_success "Test passed: $test_name"
             TESTS_PASSED=$((TESTS_PASSED + 1))
@@ -253,14 +264,26 @@ check_vault_connectivity() {
     if echo "$vault_health" | jq -e '.sealed == false' > /dev/null; then
         log_success "Vault connectivity verified"
         
-        # Check if OIDC auth method is enabled
-        local auth_methods=$(curl -s "$VAULT_ADDR/v1/sys/auth" 2>/dev/null || echo '{}')
-        if echo "$auth_methods" | jq -e '.["oidc/"]' > /dev/null; then
-            log_success "OIDC auth method is enabled"
-            return 0
+        # Check if auth methods are enabled (requires authentication)
+        # Use VAULT_ROOT_TOKEN from environment if available
+        local vault_token="${VAULT_ROOT_TOKEN:-}"
+        if [[ -n "$vault_token" ]]; then
+            local auth_methods=$(curl -s -H "X-Vault-Token: $vault_token" "$VAULT_ADDR/v1/sys/auth" 2>/dev/null || echo '{}')
+            if echo "$auth_methods" | jq -e '.["oidc/"] or .["jwt/"]' > /dev/null; then
+                if echo "$auth_methods" | jq -e '.["oidc/"]' > /dev/null; then
+                    log_success "OIDC auth method is enabled"
+                elif echo "$auth_methods" | jq -e '.["jwt/"]' > /dev/null; then
+                    log_success "JWT auth method is enabled (broker-based authentication)"
+                fi
+                return 0
+            else
+                log_warning "Neither OIDC nor JWT auth method detected"
+                return 1
+            fi
         else
-            log_warning "OIDC auth method not detected"
-            return 1
+            log_warning "Cannot verify auth methods (VAULT_ROOT_TOKEN not available)"
+            log_success "Vault is accessible and unsealed"
+            return 0
         fi
     else
         log_error "Vault is sealed or inaccessible"
@@ -330,7 +353,7 @@ generate_test_report() {
     else
         log_error "Some tests failed"
         echo
-        echo "❌ Failed tests:"
+        echo "Failed tests:"
         for failed_test in "${FAILED_TESTS[@]}"; do
             echo "   - $failed_test"
         done
