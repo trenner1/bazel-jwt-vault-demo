@@ -37,7 +37,7 @@ async def authenticate_for_bazel_build(pipeline="bazel-build", repo="example-rep
             start_response = await client.post(f"{BROKER_URL}/cli/start")
             
             if start_response.status_code != 200:
-                print(f"❌ Failed to start authentication: {start_response.text}")
+                print(f"Failed to start authentication: {start_response.text}")
                 return None
                 
             auth_data = start_response.json()
@@ -49,28 +49,28 @@ async def authenticate_for_bazel_build(pipeline="bazel-build", repo="example-rep
             print(" AUTHENTICATION REQUIRED FOR BAZEL BUILD")
             print("="*60)
             print(" Opening browser for Okta authentication...")
-            print(f"🔗 URL: {auth_url}")
+            print(f"URL: {auth_url}")
             print("="*60)
             
             # Open browser automatically
             webbrowser.open(auth_url)
             
             # Step 3: Wait for user to complete authentication
-            print("\n⏳ Please complete authentication in your browser...")
+            print("\nPlease complete authentication in your browser...")
             print(" After authentication, you'll be redirected to a callback page.")
-            print("� The page will show a JSON response with authentication details.")
+            print("The page will show a JSON response with authentication details.")
             print(" Copy the 'session_id' value from that JSON response:")
             
             session_id = input("\n� Paste session_id: ").strip().strip('"')
             
             if not session_id:
-                print("❌ No session_id provided")
+                print("No session_id provided")
                 return None
             
             print(f" Using session: {session_id}")
             
             # Step 4: Exchange session for constrained Vault token
-            print(f"🎫 Getting Vault token for build context...")
+            print(f"Getting Vault token for build context...")
             vault_response = await client.post(
                 f"{BROKER_URL}/exchange",
                 json={
@@ -98,11 +98,11 @@ async def authenticate_for_bazel_build(pipeline="bazel-build", repo="example-rep
                     "policies": token_data["policies"]
                 }
             else:
-                print(f"❌ Failed to get Vault token: {vault_response.text}")
+                print(f"Failed to get Vault token: {vault_response.text}")
                 return None
             
         except Exception as e:
-            print(f"💥 Authentication failed: {e}")
+            print(f"Authentication failed: {e}")
             return None
 
 async def main():
@@ -144,7 +144,7 @@ async def main():
         # 3. Continue with build process
         
     else:
-        print("\n❌ Authentication failed!")
+        print("\nAuthentication failed!")
         print(" Bazel build cannot proceed without authentication")
         sys.exit(1)
 

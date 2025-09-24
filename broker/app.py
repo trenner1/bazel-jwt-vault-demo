@@ -453,7 +453,7 @@ async def pkce_auth_exchange(code: str, state: str) -> Dict[str, Any]:
         print(f" Exception in pkce_auth_exchange: {e}")
         raise
 
-async def create_child_token(parent_token: str, user_info: Dict[str, Any], request_body: Dict[str, Any]) -> Dict[str, Any]:
+async def create_child_token(parent_token: str, user_info: Dict[str, Any], request_body: Dict[str, Any], selected_team: str = None) -> Dict[str, Any]:
     """
     Create a constrained child Vault token with user metadata and team-specific policies.
     
@@ -490,15 +490,19 @@ async def create_child_token(parent_token: str, user_info: Dict[str, Any], reque
     repo = request_body.get("repo", "unknown") 
     target = request_body.get("target", "unknown")
     
-    # Determine team from groups
-    team = "unknown"
-    for group in groups:
-        if "developers" in group.lower():
-            team = group.replace("-developers", "-team")
-            break
-        elif "devops" in group.lower():
-            team = "devops-team"
-            break
+    # Use selected team if provided, otherwise determine from groups (fallback)
+    if selected_team and selected_team != "unknown":
+        team = selected_team
+    else:
+        # Fallback: determine team from groups (for backward compatibility)
+        team = "unknown"
+        for group in groups:
+            if "developers" in group.lower():
+                team = group.replace("-developers", "-team")
+                break
+            elif "devops" in group.lower():
+                team = "devops-team"
+                break
     
     # Team-specific policy mapping
     team_policy_mapping = {
@@ -1201,9 +1205,10 @@ async def exchange(req: Request):
     
     parent_token = session["vault_token"]
     user_info = session["user_info"]
+    selected_team = session.get("selected_team", "unknown")
     
-    # Create child token with user metadata
-    return await create_child_token(parent_token, user_info, body)
+    # Create child token with user metadata and selected team
+    return await create_child_token(parent_token, user_info, body, selected_team)
 
 @app.post("/cli/start")
 async def cli_auth_start():
