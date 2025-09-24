@@ -96,7 +96,7 @@ sequenceDiagram
 
     Note over User,Vault: Authorization Code Flow with PKCE
     
-    User->>CLI: ./tools/bazel-auth-simple
+    User->>CLI: ./bazel-auth-simple
     CLI->>CLI: Generate PKCE code_verifier + code_challenge
     CLI->>Broker: POST /cli/start (with PKCE params)
     Broker->>CLI: Return auth URL + state
@@ -488,7 +488,7 @@ export VAULT_TOKEN="hvs.CAESIJ..."
 export VAULT_ADDR="http://vault:8200"
 
 # Shell integration
-eval $(./tools/bazel-auth-simple --session-id $SESSION --export)
+eval $(./bazel-auth-simple --session-id $SESSION --export)
 ```
 
 #### Monitoring & Health APIs

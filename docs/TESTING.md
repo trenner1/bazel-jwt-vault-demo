@@ -120,8 +120,8 @@ Specific tests for CLI authentication tools:
 
 # Individual tool testing manually:
 # Test zero-dependency CLI tool (recommended)
-./tools/bazel-auth-simple --help
-./tools/bazel-auth-simple --no-browser  # Test PKCE flow initiation
+./bazel-auth-simple --help
+./bazel-auth-simple --no-browser  # Test PKCE flow initiation
 
 # Test Python CLI tool (if dependencies available)
 ./tools/bazel-auth --help
@@ -158,7 +158,7 @@ curl -f http://localhost:8200/v1/sys/health || {
 }
 
 # Test CLI tools availability
-./tools/bazel-auth-simple --help >/dev/null || {
+./bazel-auth-simple --help >/dev/null || {
     echo "CLI tools not executable"
     exit 1
 }
@@ -220,12 +220,12 @@ echo " PKCE authentication flow configured correctly"
 
 # Test 3: CLI tools functionality
 echo "Testing CLI tools..."
-cli_help_output=$(./tools/bazel-auth-simple --help 2>&1)
+cli_help_output=$(./bazel-auth-simple --help 2>&1)
 if [[ "$cli_help_output" != *"PKCE"* ]]; then
     echo "CLI help doesn't mention PKCE (may be outdated)"
 fi
 
-cli_url_output=$(./tools/bazel-auth-simple --no-browser 2>/dev/null | head -1)
+cli_url_output=$(./bazel-auth-simple --no-browser 2>/dev/null | head -1)
 if [[ "$cli_url_output" != *"Starting"* ]]; then
     echo "CLI tool not generating authentication flow"
     exit 1

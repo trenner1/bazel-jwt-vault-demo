@@ -52,6 +52,7 @@ env/
 
 # Bazel
 bazel-*
+!bazel-auth-simple
 .bazel
 .bazelrc.local
 .bazelversion.local

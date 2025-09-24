@@ -289,7 +289,7 @@ echo "----------------------------------------"
 
 echo "Manual testing workflow:"
 echo "1. Start authentication:"
-echo "   ./tools/bazel-auth-simple"
+echo "   ./bazel-auth-simple"
 echo
 echo "2. Complete Okta authentication in browser"
 echo
@@ -332,7 +332,7 @@ fi
 
 echo
 echo " Recommended usage:"
-echo "   ./tools/bazel-auth-simple  # Zero dependencies, fastest"
+echo "   ./bazel-auth-simple  # Zero dependencies, fastest"
 echo "   ./tools/bazel-auth         # Python-based, more features"
 echo "   ./tools/bazel-build        # Wrapper for Bazel commands"
 echo

@@ -67,7 +67,7 @@ sequenceDiagram
 
     Note over Dev,Secrets: Broker-Generated JWT Flow
 
-    Dev->>CLI: ./tools/bazel-auth-simple
+    Dev->>CLI: ./bazel-auth-simple
     CLI->>Broker: POST /cli/start (generate PKCE)
     Broker-->>CLI: Auth URL + PKCE state
     CLI->>Browser: Open auth URL
@@ -159,7 +159,7 @@ docker-compose up -d
 ### 3. Test Authentication
 ```bash
 # Test the authentication system
-./tools/bazel-auth-simple
+./bazel-auth-simple
 
 # Or run comprehensive tests
 ./tests/run-tests.sh  # Choose option 4: Full Workflow Test
@@ -178,7 +178,7 @@ docker-compose up -d
 
 ### CLI Tools (Production Ready)
 ```bash
-./tools/bazel-auth-simple  # Recommended - zero dependencies
+./bazel-auth-simple  # Recommended - zero dependencies
 ./tools/bazel-build        # Bazel wrapper with auto-auth
 ./tools/bazel-auth         # Python-based with advanced features  
 ```
