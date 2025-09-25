@@ -10,7 +10,7 @@
 # - Team Entities: One entity per team for stable aliases and shared access
 # - User Context: Multi-team users select context via broker interface
 
-set -e
+set -euo pipefail
 
 # Load environment variables from .env file if it exists
 if [[ -f .env ]]; then
