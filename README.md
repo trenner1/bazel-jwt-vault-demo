@@ -1,6 +1,6 @@
 # Bazel JWT Vault Demo - Enterprise Team-Based Authentication
 
-A demonstration of **enterprise team-based authentication** with HashiCorp Vault and Okta, implementing **broker-generated JWT tokens** for team-based secret access. Provi##  Documentation
+A demonstration of **enterprise team-based authentication** with HashiCorp Vault and Okta, implementing **broker-generated JWT tokens** for team-based secret access. 
 
 - **[Complete Setup Guide](docs/SETUP.md)**: Step-by-step configuration instructions
 - **[Architecture Documentation](docs/ARCHITECTURE.md)**: System design and JWT flow details
@@ -17,7 +17,7 @@ This system includes enterprise features for production deployment:
 - **Scalable Architecture**: Stateless broker can be horizontally scaled
 - **Team Context Selection**: Seamless multi-team user experience
 
-For detailed production deployment instructions, see [docs/SETUP.md](docs/SETUP.md).tion team isolation with complete automation and stable entity management.
+For detailed production deployment instructions, see [docs/SETUP.md](docs/SETUP.md).
 
 ## What This System Provides
 
@@ -130,6 +130,7 @@ sequenceDiagram
 - Docker Desktop running
 - Okta developer account (free at https://developer.okta.com)
 - Bazel installed (for testing build integration)
+- jenkins-vault-poc up and running from [https://github.com/trenner1/jenkins-vault-poc](https://github.com/trenner1/jenkins-vault-poc)
 
 ### 1. Setup
 ```bash
@@ -141,7 +142,7 @@ cd bazel-jwt-vault-demo
 ./scripts/generate-jwt-keys.sh
 
 # Configure environment - update with your Okta details
-vim .env  # See docs/SETUP.md for configuration details
+vim .env  # See docs/SETUP.md for configuration details - ensure to copy the root token from the jenkins poc into your .env before running the next step.
 ```
 
 ### 2. Run
@@ -165,7 +166,7 @@ docker-compose up -d
 ./tests/run-tests.sh  # Choose option 4: Full Workflow Test
 ```
 
-📖 **For complete setup instructions**, see [docs/SETUP.md](docs/SETUP.md)
+**For complete setup instructions**, see [docs/SETUP.md](docs/SETUP.md)
 
 ## Authentication Flow - FULLY WORKING
 
@@ -178,7 +179,7 @@ docker-compose up -d
 
 ### CLI Tools (Production Ready)
 ```bash
-./bazel-auth-simple  # Recommended - zero dependencies
+./bazel-auth-simple        # Recommended - zero dependencies
 ./tools/bazel-build        # Bazel wrapper with auto-auth
 ./tools/bazel-auth         # Python-based with advanced features  
 ```
@@ -387,7 +388,7 @@ vault list identity/entity-alias/id
 
 ```
 bazel-jwt-vault-demo/
-├── README.md                         # This file (updated for OIDC)
+├── README.md                        # This file (updated for OIDC)
 ├── docker-compose.yml               # OIDC-enabled services
 ├── Dockerfile                       # Broker container
 ├── .env                             # Okta OIDC configuration
