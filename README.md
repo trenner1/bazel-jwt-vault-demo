@@ -7,9 +7,9 @@ A demonstration of **enterprise team-based authentication** with HashiCorp Vault
 - **[Development Guide](docs/DEVELOPMENT.md)**: Development and troubleshooting
 - **[Testing Guide](docs/TESTING.md)**: Comprehensive testing procedures
 
-## Production Ready
+## Realistic Enterprise Demo
 
-This system includes enterprise features for production deployment:
+This system demonstrates enterprise features suitable for real-world scenarios:
 - **RSA-Signed JWTs**: Secure broker-generated tokens with 2048-bit RSA key pairs
 - **Team Entity Stability**: Consistent team entities eliminate access inconsistencies
 - **Time-Limited Tokens**: Automatic expiration and usage limits
@@ -17,7 +17,7 @@ This system includes enterprise features for production deployment:
 - **Scalable Architecture**: Stateless broker can be horizontally scaled
 - **Team Context Selection**: Seamless multi-team user experience
 
-For detailed production deployment instructions, see [docs/SETUP.md](docs/SETUP.md).
+For detailed setup and deployment instructions, see [docs/SETUP.md](docs/SETUP.md).
 
 ## What This System Provides
 
@@ -44,7 +44,7 @@ For detailed production deployment instructions, see [docs/SETUP.md](docs/SETUP.
 - **Bazel Integration**: Seamless wrapper for Bazel builds with automatic authentication
 - **Copy-Paste Friendly**: All commands and tokens easily copyable from web interface
 
-### **Enterprise Ready**
+### **Enterprise-Grade Features**
 - **Scales with Organization**: Team model based on stable team entities, not individual management
 - **Identity Integration**: Works with existing Okta directory and group structure
 - **Pipeline Integration**: Designed for CI/CD pipeline authentication with team context selection
@@ -177,7 +177,7 @@ docker-compose up -d
 4. Auto-copy session ID from enhanced callback
 5. Exchange for team-scoped Vault tokens
 
-### CLI Tools (Production Ready)
+### CLI Tools (Realistic Demo)
 ```bash
 ./bazel-auth-simple        # Recommended - zero dependencies
 ./tools/bazel-build        # Bazel wrapper with auto-auth
@@ -186,9 +186,9 @@ docker-compose up -d
 
 | Tool | Status | Dependencies | Best For |
 |------|--------|--------------|----------|
-| `bazel-auth-simple` | Production Ready | curl only | Quick authentication |
-| `bazel-build` | Production Ready | bash + curl | Bazel builds with auth |
-| `bazel-auth` | Production Ready | Python + requests | Advanced scripting |
+| `bazel-auth-simple` | Demo Ready | curl only | Quick authentication |
+| `bazel-build` | Demo Ready | bash + curl | Bazel builds with auth |
+| `bazel-auth` | Demo Ready | Python + requests | Advanced scripting |
 
 ### Bazel Build Integration
 
@@ -289,7 +289,7 @@ The system includes a comprehensive test suite that validates all functionality:
 | **CLI Tools** | Passing | All authentication tools |
 | **Team Isolation** | Passing | Access control & permissions |
 
-**All automated tests now pass!** The system is production-ready with comprehensive validation.
+**All automated tests now pass!** The system provides a comprehensive realistic demonstration with full validation.
 
 ## Recent Improvements
 
@@ -313,7 +313,7 @@ The system includes a comprehensive test suite that validates all functionality:
 - Zero-Dependency CLI: `bazel-auth-simple` works on any system with just `curl`
 - Interactive Prompts: Clear step-by-step authentication guidance
 - Verbose Logging: Detailed debugging output for troubleshooting
-- Production Ready: All tools tested and validated for enterprise use
+- Demo Ready: All tools tested and validated for realistic enterprise-grade scenarios
 
 ##  Documentation
 
@@ -322,16 +322,16 @@ The system includes a comprehensive test suite that validates all functionality:
 - **[Development Guide](docs/DEVELOPMENT.md)**: Development and troubleshooting
 - **[Testing Guide](docs/TESTING.md)**: Comprehensive testing procedures
 
-##  Production Ready
+##  Realistic Enterprise Scenario
 
-This system includes enterprise features for production deployment:
+This system demonstrates enterprise features suitable for real-world deployment:
 - **PKCE Security**: Authorization Code Flow with Proof Key for Code Exchange
 - **Real User Identity**: Audit trails with actual user emails and team metadata
 - **Time-Limited Tokens**: Automatic expiration and usage limits
 - **Network Integration**: Works within existing Docker network infrastructure
 - **Scalable Architecture**: Stateless broker can be horizontally scaled
 
-For detailed production deployment instructions, see [docs/SETUP.md](docs/SETUP.md).
+For detailed setup and deployment instructions, see [docs/SETUP.md](docs/SETUP.md).
 - **Monitoring**: Implement health checks and monitoring for all components
 
 ##  Troubleshooting
@@ -361,7 +361,7 @@ vault list identity/entity/id
 vault list identity/entity-alias/id
 ```
 
-##  Enterprise Benefits
+##  Realistic Enterprise Features
 
 ### Compared to Direct OIDC Approach
 
@@ -375,13 +375,13 @@ vault list identity/entity-alias/id
 | **Alias Stability** | User-dependent aliases | Predictable team aliases |
 | **Scaling** | Entities scale with users | Entities scale with teams |
 
-### Key Advantages
+### Key Demonstration Features
 
  **Stable Team Entities**: Consistent "mobile-team", "devops-team" entities with stable aliases  
  **No Entity Churn**: Same entity reused across team authentications  
  **Team Context Selection**: Clean interface for multi-team users  
  **Predictable Access**: Team-based permissions with stable entity management  
- **Enterprise Integration**: Works with existing Okta directory structure  
+ **Enterprise-Grade Integration**: Works with existing Okta directory structure  
  **RSA Security**: Broker-controlled JWT signing with secure key management  
 
 ##  Repository Structure
@@ -460,4 +460,4 @@ MIT License - see LICENSE file for details.
 
 ---
 
-*Built with ❤ for enterprise teams who want secure, automated, team-based authentication with stable entity management.*
+*Built with ❤ for demonstrating secure, automated, team-based authentication with stable entity management for enterprise teams.*

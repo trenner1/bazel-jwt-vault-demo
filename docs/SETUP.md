@@ -11,7 +11,7 @@ This guide provides comprehensive instructions for setting up the Enterprise OID
 - [CLI Tools Setup](#cli-tools-setup)
 - [Team Configuration](#team-configuration)
 - [Testing & Validation](#testing--validation)
-- [Production Deployment](#production-deployment)
+- [Advanced Deployment](#advanced-deployment)
 - [Troubleshooting](#troubleshooting)
 
 ##  Quick Start
@@ -158,7 +158,7 @@ This creates:
 - **Never commit private keys to version control**
 - Private key is used by broker to sign JWT tokens
 - Public key is used by Vault to verify JWT signatures
-- For production, use proper key management solutions
+- For advanced deployment, use proper key management solutions
 
 #### Regenerating JWT Keys
 
@@ -362,25 +362,25 @@ curl -X POST http://localhost:5000/cli/start
 # - state (CSRF protection)
 ```
 
-##  Production Deployment
+##  Advanced Deployment
 
 ### Security Considerations
 
-1. **HTTPS Required**: All production deployments must use HTTPS
+1. **HTTPS Required**: All advanced deployments should use HTTPS
 2. **Secure Secrets**: Use proper secret management for environment variables
 3. **Network Security**: Implement proper network segmentation
 4. **Monitoring**: Add comprehensive logging and monitoring
 
-### Production Environment Variables
+### Advanced Environment Variables
 
 ```bash
-# Production-specific configuration
+# Advanced deployment configuration
 OKTA_DOMAIN=company.okta.com
-OKTA_CLIENT_ID=production-client-id
-OKTA_CLIENT_SECRET=production-client-secret
+OKTA_CLIENT_ID=advanced-client-id
+OKTA_CLIENT_SECRET=advanced-client-secret
 OKTA_REDIRECT_URI=https://vault-broker.company.com/auth/callback
 VAULT_ADDR=https://vault.company.com:8200
-VAULT_ROOT_TOKEN=production-vault-token
+VAULT_ROOT_TOKEN=advanced-vault-token
 HTTPS_ONLY=true
 ```
 
@@ -388,7 +388,7 @@ HTTPS_ONLY=true
 
 - **Load Balancing**: Broker service is stateless and can be horizontally scaled
 - **Session Storage**: Consider Redis for session storage in multi-instance deployments
-- **Vault HA**: Use Vault High Availability configuration for production
+- **Vault HA**: Use Vault High Availability configuration for advanced setups
 - **Monitoring**: Implement health checks and metrics collection
 
 ##  Troubleshooting
@@ -510,6 +510,6 @@ You now have a fully configured Enterprise OIDC authentication system with:
 -  **Zero-dependency CLI Tools** for developer productivity  
 -  **Team-based Access Control** via Okta groups
 -  **Enhanced User Experience** with auto-copy callback page
--  **Production-ready Architecture** with proper security controls
+-  **Demo-ready Architecture** with proper security controls
 
 For ongoing maintenance and updates, refer to the comprehensive documentation in the `docs/` directory.

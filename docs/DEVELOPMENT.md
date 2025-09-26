@@ -236,7 +236,7 @@ class Settings(BaseSettings):
     vault_token: Optional[str] = None
     
     # Application Configuration
-    session_secret_key: str = "dev-secret-change-in-production"
+    session_secret_key: str = "dev-secret-change-for-deployment"
     log_level: str = "INFO"
     
     @validator("okta_domain")
