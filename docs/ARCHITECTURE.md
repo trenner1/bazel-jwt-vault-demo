@@ -338,7 +338,7 @@ networks:
 
 **Note**: This configuration assumes HashiCorp Vault is already running in another container on the `jenkins-vault-poc_default` network. The broker connects to an existing Vault instance rather than managing its own Vault service.
 
-### Advanced Deployment Considerations
+### Production Deployment Considerations
 
 #### High Availability
 - **Load Balancer**: Multiple broker instances behind load balancer
