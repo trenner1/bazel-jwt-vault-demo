@@ -18,7 +18,7 @@ Our testing strategy follows the testing pyramid principle:
          /\
         /  \
        /    \
-      /  E2E \        ← Few, high-value integration tests
+      / E2E  \        ← Few, high-value integration tests
      /_______ \
     /          \
    / Integration\     ← Key workflow testing
@@ -59,6 +59,7 @@ tests/
 └── scripts/                          # Helper test scripts
     ├── test-team-entities.sh         # Team entity verification
     ├── test-team-jwt.sh              # JWT team testing
+    ├── test-token-roles.sh           # Token auth role security validation
     └── verify-team-entities.sh       # Team setup verification
 ```
 
@@ -108,6 +109,9 @@ Run individual test suites directly:
 
 # Run comprehensive workflow test
 ./tests/integration/test-full-workflow.sh
+
+# Test token auth role security (requires root token)
+./tests/scripts/test-token-roles.sh
 ```
 
 ### CLI Tools Testing
@@ -164,7 +168,48 @@ curl -f http://localhost:8200/v1/sys/health || {
 }
 ```
 
-## 🔗 Integration Tests
+### Token Auth Role Security Testing
+
+Test the enhanced security model with token auth roles:
+
+```bash
+# Test token role security (requires VAULT_ROOT_TOKEN)
+export VAULT_ROOT_TOKEN="your-root-token"
+./tests/scripts/test-token-roles.sh
+```
+
+**What This Test Validates**:
+- Token auth roles exist with proper policy constraints
+- Team-specific token creation permissions (mobile team cannot create backend tokens)
+- Child tokens are created with role-based restrictions
+- Cross-team access is properly denied at both secret and token creation levels
+- Non-renewable tokens with limited uses
+- DevOps team retains cross-functional token creation access
+- Proper entity/alias sharing without churn
+
+**Sample Output**:
+```
+Testing Token Role Security Implementation
+==========================================
+
+=== Verifying Token Role Configuration ===
+
+✓ Role mobile-team-token exists
+  Allowed policies: bazel-base,bazel-mobile-team
+  Disallowed policies: bazel-backend-team,bazel-frontend-team
+  Renewable: false
+
+✓ Token created with role mobile-team-token
+  Policies: bazel-base,bazel-mobile-team
+  TTL: 7200 seconds
+  Uses remaining: 10
+
+✓ Mobile token can access mobile secrets (expected)
+✓ Mobile token correctly denied access to backend secrets
+✓ Mobile token correctly denied access to frontend secrets
+```
+
+## Integration Tests
 
 ### Test 1: Okta Authentication (`test-okta-auth.sh`)
 
@@ -488,6 +533,131 @@ echo " Token throughput test completed"
 ```
 
 ##  Security Testing
+
+### Team Token Creation Isolation Test
+
+Test that teams cannot create tokens for other teams:
+
+```bash
+#!/bin/bash
+# Test team-specific token creation security - CORRECTED VERSION
+
+echo "🔒 Testing Team Token Creation Isolation..."
+
+# Prerequisites check
+echo "📋 Checking prerequisites..."
+
+# Check if VAULT_TOKEN is set (needed for token role verification)
+if [ -z "$VAULT_TOKEN" ]; then
+    echo "❌ VAULT_TOKEN not set. Please set a root or admin token first."
+    echo "   Example: export VAULT_TOKEN=your-root-token"
+    exit 1
+fi
+
+# Check if broker is running
+if ! curl -s -f http://localhost:8081/health > /dev/null; then
+    echo "❌ Broker service not available at http://localhost:8081"
+    exit 1
+fi
+
+echo "✅ Prerequisites checked"
+
+# Step 1: Get a team-specific authentication session
+if [ -z "$MOBILE_TOKEN" ]; then
+    echo ""
+    echo "🔐 Authentication Required"
+    echo "=========================="
+    echo ""
+    echo "Step 1: Start PKCE authentication flow:"
+    echo "   curl -X POST http://localhost:8081/cli/start"
+    echo ""
+    echo "Step 2: Copy the 'auth_url' and open in browser"
+    echo ""
+    echo "Step 3: Authenticate as a MOBILE team member"
+    echo ""
+    echo "Step 4: Copy 'session_id' from callback response"
+    echo ""
+    echo "Step 5: Get team token:"
+    echo "   export SESSION_ID=your-session-id"
+    echo "   export MOBILE_TOKEN=\$(./tools/bazel-auth-simple --session-id \$SESSION_ID --token-only)"
+    echo ""
+    echo "Step 6: Re-run this test with the token"
+    echo ""
+    exit 1
+fi
+
+# Step 2: Test token creation permissions
+echo "🧪 Testing team token creation boundaries..."
+
+# Test 1: Mobile team should be able to create mobile team tokens
+echo ""
+echo "Test 1: Mobile team creating mobile team token (should succeed)..."
+mobile_create_result=$(VAULT_TOKEN=$MOBILE_TOKEN vault write auth/token/create/mobile-team-token ttl=1h -format=json 2>&1)
+if [[ $? -eq 0 ]]; then
+    echo "✅ Mobile team can create mobile team tokens"
+    mobile_child_token=$(echo "$mobile_create_result" | jq -r '.auth.client_token // empty')
+else
+    echo "❌ Mobile team failed to create mobile team tokens"
+    echo "   Error: $mobile_create_result"
+fi
+
+# Test 2: Mobile team should NOT be able to create backend team tokens
+echo ""
+echo "Test 2: Mobile team creating backend team token (should fail)..."
+backend_create_result=$(VAULT_TOKEN=$MOBILE_TOKEN vault write auth/token/create/backend-team-token ttl=1h 2>&1)
+if [[ $? -ne 0 ]] && [[ $backend_create_result == *"permission denied"* ]]; then
+    echo "✅ Mobile team correctly denied creating backend team tokens"
+    echo "   Security boundary working as expected!"
+else
+    echo "❌ SECURITY ISSUE: Mobile team can create backend team tokens"
+    echo "   Result: $backend_create_result"
+fi
+
+# Test 3: Verify secret access boundaries
+echo ""
+echo "Test 3: Testing secret access boundaries..."
+backend_secret_test=$(VAULT_TOKEN=$MOBILE_TOKEN vault kv get kv/dev/backend/config 2>&1)
+if [[ $? -ne 0 ]] && [[ $backend_secret_test == *"permission denied"* ]]; then
+    echo "✅ Mobile team correctly denied access to backend secrets"
+else
+    echo "❌ SECURITY ISSUE: Mobile team can access backend secrets"
+fi
+
+# Cleanup
+if [ -n "$mobile_child_token" ]; then
+    echo ""
+    echo "🧹 Cleaning up test tokens..."
+    vault token revoke $mobile_child_token 2>/dev/null
+    echo "✅ Test tokens cleaned up"
+fi
+
+echo ""
+echo "🔒 Team token creation isolation test completed"
+```
+
+**Key Fixes in This Test**:
+
+1. **Proper Prerequisites**: Checks for VAULT_TOKEN and broker availability
+2. **Correct Authentication Flow**: Uses the proper PKCE → session_id → token sequence  
+3. **Clear Error Messages**: Shows exactly what went wrong and how to fix it
+4. **Comprehensive Testing**: Tests both token creation and secret access boundaries
+5. **Cleanup**: Properly revokes test tokens to avoid accumulation
+
+**To run this test**:
+
+```bash
+# 1. Ensure you have a root/admin token for role verification
+export VAULT_TOKEN=your-root-token
+
+# 2. Get a mobile team token through authentication
+curl -X POST http://localhost:8081/cli/start
+# Open auth_url in browser, authenticate as mobile team member
+export SESSION_ID=session-id-from-callback
+export MOBILE_TOKEN=$(./tools/bazel-auth-simple --session-id $SESSION_ID --token-only)
+
+# 3. Run the test
+./tests/scripts/test-team-token-isolation.sh
+```
 
 ### Authentication Bypass Test
 
