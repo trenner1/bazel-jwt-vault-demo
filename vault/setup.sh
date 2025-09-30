@@ -25,7 +25,7 @@ else
 fi
 
 # Check required environment variables
-if [[ -z "$VAULT_ADDR" ]]; then
+if [[ -z "${VAULT_ADDR:-}" ]]; then
     echo "Setting default VAULT_ADDR=http://localhost:8200"
     export VAULT_ADDR="http://localhost:8200"
 else
@@ -36,8 +36,8 @@ else
     fi
 fi
 
-if [[ -z "$VAULT_TOKEN" ]]; then
-    if [[ -n "$VAULT_ROOT_TOKEN" ]]; then
+if [[ -z "${VAULT_TOKEN:-}" ]]; then
+    if [[ -n "${VAULT_ROOT_TOKEN:-}" ]]; then
         echo "Using VAULT_ROOT_TOKEN as VAULT_TOKEN"
         export VAULT_TOKEN="$VAULT_ROOT_TOKEN"
     else
@@ -46,7 +46,7 @@ if [[ -z "$VAULT_TOKEN" ]]; then
     fi
 fi
 
-if [[ -z "$OKTA_DOMAIN" ]]; then
+if [[ -z "${OKTA_DOMAIN:-}" ]]; then
     echo "Warning: OKTA_DOMAIN not set, using placeholder"
     OKTA_DOMAIN="dev-example.okta.com"
 fi
@@ -88,6 +88,11 @@ path "kv/data/dev/shared/*" {
 path "kv/data/dev/users/{{identity.entity.aliases.auth_oidc_*.name}}/*" {
   capabilities = ["read", "create", "update"]
 }
+
+# Allow token lookup for validation (needed for token operations)
+path "auth/token/lookup-self" {
+  capabilities = ["read"]
+}
 EOF
 
 # Mobile team policy - access to mobile-specific secrets
@@ -99,6 +104,11 @@ path "kv/data/dev/mobile/*" {
 
 path "kv/metadata/dev/mobile/*" {
   capabilities = ["read", "list"]
+}
+
+# Allow creating child tokens only for mobile team
+path "auth/token/create/mobile-team-token" {
+  capabilities = ["create", "update"]
 }
 
 # Legacy pipeline paths for backward compatibility
@@ -118,6 +128,11 @@ path "kv/metadata/dev/backend/*" {
   capabilities = ["read", "list"]
 }
 
+# Allow creating child tokens only for backend team
+path "auth/token/create/backend-team-token" {
+  capabilities = ["create", "update"]
+}
+
 # Legacy pipeline paths for backward compatibility
 path "kv/data/dev/apps/team-backend-team-pipeline/*" {
   capabilities = ["read"]
@@ -135,8 +150,55 @@ path "kv/metadata/dev/frontend/*" {
   capabilities = ["read", "list"]
 }
 
+# Allow creating child tokens only for frontend team
+path "auth/token/create/frontend-team-token" {
+  capabilities = ["create", "update"]
+}
+
 # Legacy pipeline paths for backward compatibility
 path "kv/data/dev/apps/team-frontend-team-pipeline/*" {
+  capabilities = ["read"]
+}
+EOF
+
+# DevOps team policy - cross-functional access with all token creation permissions
+vault policy write bazel-devops-team - <<EOF
+# DevOps team has access to all team secrets
+path "kv/data/dev/mobile/*" {
+  capabilities = ["read"]
+}
+
+path "kv/data/dev/backend/*" {
+  capabilities = ["read"]
+}
+
+path "kv/data/dev/frontend/*" {
+  capabilities = ["read"]
+}
+
+path "kv/metadata/dev/*" {
+  capabilities = ["read", "list"]
+}
+
+# DevOps can create tokens for any team (cross-functional access)
+path "auth/token/create/mobile-team-token" {
+  capabilities = ["create", "update"]
+}
+
+path "auth/token/create/backend-team-token" {
+  capabilities = ["create", "update"]
+}
+
+path "auth/token/create/frontend-team-token" {
+  capabilities = ["create", "update"]
+}
+
+path "auth/token/create/devops-team-token" {
+  capabilities = ["create", "update"]
+}
+
+# Legacy pipeline paths for backward compatibility
+path "kv/data/dev/apps/team-*-pipeline/*" {
   capabilities = ["read"]
 }
 EOF
@@ -146,6 +208,7 @@ echo "   bazel-base: shared secrets + user-specific paths"
 echo "   bazel-mobile-team: mobile development secrets"
 echo "   bazel-backend-team: backend development secrets"
 echo "   bazel-frontend-team: frontend development secrets"
+echo "   bazel-devops-team: cross-functional access with all token creation permissions"
 
 # 3) Create team-specific secrets with realistic content
 echo " Creating team-specific secrets..."
@@ -287,7 +350,7 @@ vault write auth/jwt/role/devops-team \
   bound_subject="devops-team" \
   user_claim="sub" \
   role_type="jwt" \
-  policies="bazel-backend-team,bazel-frontend-team,bazel-mobile-team,bazel-base" \
+  policies="bazel-devops-team,bazel-base" \
   ttl="4h" \
   max_ttl="8h"
 
@@ -299,6 +362,69 @@ vault write auth/jwt/role/base-team \
   policies="bazel-base" \
   ttl="1h" \
   max_ttl="2h"
+
+echo "Created JWT roles for team-based authentication:"
+echo "   mobile-team, backend-team, frontend-team, devops-team, base-team"
+
+# 5.5) Create token auth roles to constrain child token creation
+echo " Configuring token auth roles for secure child token creation..."
+
+# Mobile team token role - constrains tokens created by mobile-team JWT tokens
+vault write auth/token/roles/mobile-team-token \
+  allowed_policies="bazel-base,bazel-mobile-team" \
+  disallowed_policies="bazel-backend-team,bazel-frontend-team" \
+  orphan=false \
+  renewable=false \
+  path_suffix="mobile" \
+  token_max_ttl="4h" \
+  token_ttl="2h" \
+  token_num_uses=10
+
+# Backend team token role - constrains tokens created by backend-team JWT tokens  
+vault write auth/token/roles/backend-team-token \
+  allowed_policies="bazel-base,bazel-backend-team" \
+  disallowed_policies="bazel-mobile-team,bazel-frontend-team" \
+  orphan=false \
+  renewable=false \
+  path_suffix="backend" \
+  token_max_ttl="4h" \
+  token_ttl="2h" \
+  token_num_uses=10
+
+# Frontend team token role - constrains tokens created by frontend-team JWT tokens
+vault write auth/token/roles/frontend-team-token \
+  allowed_policies="bazel-base,bazel-frontend-team" \
+  disallowed_policies="bazel-mobile-team,bazel-backend-team" \
+  orphan=false \
+  renewable=false \
+  path_suffix="frontend" \
+  token_max_ttl="4h" \
+  token_ttl="2h" \
+  token_num_uses=10
+
+# DevOps team token role - allows broader access but still constrained
+vault write auth/token/roles/devops-team-token \
+  allowed_policies="bazel-base,bazel-devops-team" \
+  orphan=false \
+  renewable=false \
+  path_suffix="devops" \
+  token_max_ttl="8h" \
+  token_ttl="4h" \
+  token_num_uses=20
+
+# Base team token role - most restrictive
+vault write auth/token/roles/base-team-token \
+  allowed_policies="bazel-base" \
+  disallowed_policies="bazel-mobile-team,bazel-backend-team,bazel-frontend-team" \
+  orphan=false \
+  renewable=false \
+  path_suffix="base" \
+  token_max_ttl="2h" \
+  token_ttl="1h" \
+  token_num_uses=5
+
+echo "Created token auth roles for secure child token creation:"
+echo "   mobile-team-token, backend-team-token, frontend-team-token, devops-team-token, base-team-token"
 
 # 6) Enable identity secrets engine for team-based entity management
 echo " Configuring identity management for team-based entities..."
