@@ -111,4 +111,4 @@ signer_keys.json.bak
 # Backup files
 *.bak
 *.backup
-*~
+*~.vscode/
