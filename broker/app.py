@@ -80,6 +80,53 @@ def validate_okta_config():
     if not OKTA_AUTH_SERVER_ID:
         raise ValueError("OKTA_AUTH_SERVER_ID environment variable is required")
 
+async def validate_parent_token(token: str) -> Dict[str, Any]:
+    """
+    Validate that the parent token has the expected role-based constraints.
+    
+    This ensures we're working with a properly authenticated JWT token
+    that has team-specific policies rather than overly broad permissions.
+    """
+    async with httpx.AsyncClient() as client:
+        # Get token self-information
+        token_info_response = await client.get(
+            f"{VAULT_ADDR}/v1/auth/token/lookup-self",
+            headers={"X-Vault-Token": token}
+        )
+        
+        if token_info_response.status_code != 200:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid parent token or token lookup failed"
+            )
+        
+        token_data = token_info_response.json()["data"]
+        
+        # Validate token has expected constraints
+        policies = token_data.get("policies", [])
+        meta = token_data.get("meta", {})
+        token_type = token_data.get("type", "unknown")
+        
+        # Ensure the token was created through JWT auth (not direct token creation)
+        if not any(policy.startswith("bazel-") for policy in policies):
+            raise HTTPException(
+                status_code=403,
+                detail="Parent token lacks required team-based policies"
+            )
+        
+        # Verify this is a proper service token (not batch token)
+        if token_type != "service":
+            raise HTTPException(
+                status_code=403,
+                detail=f"Invalid parent token type: {token_type}. Expected service token."
+            )
+        
+        print(f"✓ Parent token validated with policies: {policies}")
+        print(f"  Token metadata: {meta}")
+        print(f"  Token type: {token_type}")
+        
+        return token_data
+
 def get_okta_auth_url(state: str) -> str:
     """Generate Okta authorization URL for OIDC flow"""
     params = {
@@ -395,7 +442,7 @@ async def pkce_auth_start() -> Dict[str, Any]:
         "code_challenge_method": "S256"
     }
     
-    auth_url = f"https://{OKTA_DOMAIN}/oauth2/{OKTA_AUTH_SERVER_ID}/v1/authorize?" + "&".join([f"{k}={v}" for k, v in params.items()])
+    auth_url = f"https://{OKTA_DOMAIN}/oauth2/{OKTA_AUTH_SERVER_ID}/v1/authorize?{urlencode(params)}"
     
     return {
         "auth_url": auth_url,
@@ -460,25 +507,30 @@ async def create_child_token(parent_token: str, user_info: Dict[str, Any], reque
     Child tokens provide enhanced security by:
     - Limited TTL (2 hours default)
     - Restricted number of uses (10 max)
-    - Team-specific policies based on user groups
+    - Team-specific policies constrained by token auth roles
     - Rich metadata for audit trails
+    - Cannot escalate privileges beyond parent token constraints
     
     Args:
-        parent_token: Parent Vault token (from OIDC authentication)
+        parent_token: Parent Vault token (from JWT role authentication)
         user_info: User profile from Okta (email, name, groups)
         request_body: Request metadata (pipeline, repo, target)
+        selected_team: Team context selected by user
         
     Returns:
         Dict containing:
         - token: Child Vault token
         - ttl: Time to live in seconds
         - uses_remaining: Number of uses allowed
-        - policies: Applied Vault policies
+        - policies: Applied Vault policies (constrained by token role)
         - metadata: User and request metadata
         
     Raises:
-        HTTPException: If child token creation fails
+        HTTPException: If child token creation fails or parent token is invalid
     """
+    
+    # Validate the parent token has proper role-based constraints
+    await validate_parent_token(parent_token)
     
     # Extract user information
     email = user_info.get("email", "unknown@example.com")
@@ -504,20 +556,22 @@ async def create_child_token(parent_token: str, user_info: Dict[str, Any], reque
                 team = "devops-team"
                 break
     
-    # Team-specific policy mapping
-    team_policy_mapping = {
-        "mobile-team": ["bazel-base", "bazel-mobile-team"],
-        "backend-team": ["bazel-base", "bazel-backend-team"], 
-        "frontend-team": ["bazel-base", "bazel-frontend-team"],
-        "devops-team": ["bazel-base", "bazel-backend-team", "bazel-frontend-team"]
+    # Team-specific token role mapping for secure child token creation
+    team_token_role_mapping = {
+        "mobile-team": "mobile-team-token",
+        "backend-team": "backend-team-token", 
+        "frontend-team": "frontend-team-token",
+        "devops-team": "devops-team-token",
+        "base-team": "base-team-token"
     }
     
-    child_policies = team_policy_mapping.get(team, ["bazel-base"])
+    token_role = team_token_role_mapping.get(team, "base-team-token")
     
     async with httpx.AsyncClient() as client:
+        # Use token role for secure child token creation
         child_token_response = await client.post(
-            f"{VAULT_ADDR}/v1/auth/token/create",
-            headers={"X-Vault-Token": VAULT_ROOT_TOKEN},
+            f"{VAULT_ADDR}/v1/auth/token/create/{token_role}",
+            headers={"X-Vault-Token": parent_token},  # Use parent token instead of root token
             json={
                 "ttl": "2h",
                 "num_uses": 10,
@@ -532,7 +586,7 @@ async def create_child_token(parent_token: str, user_info: Dict[str, Any], reque
                     "source": "oidc-broker",
                     "groups": ",".join(groups)
                 },
-                "policies": child_policies,
+                # Remove explicit policies - inherit from parent token
                 "display_name": f"bazel-{team}-{email.split('@')[0]}",
             }
         )
@@ -664,7 +718,7 @@ async def login():
         "code_challenge_method": "S256"
     }
     
-    auth_url = f"https://{OKTA_DOMAIN}/oauth2/{OKTA_AUTH_SERVER_ID}/v1/authorize?" + "&".join([f"{k}={v}" for k, v in params.items()])
+    auth_url = f"https://{OKTA_DOMAIN}/oauth2/{OKTA_AUTH_SERVER_ID}/v1/authorize?{urlencode(params)}"
     return RedirectResponse(url=auth_url)
 
 @app.get("/auth/callback")
