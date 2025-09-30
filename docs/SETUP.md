@@ -291,6 +291,29 @@ path "kv/data/shared/*" {
 }
 ```
 
+### Token Auth Role Creation
+
+The setup script also creates **token auth roles** for enhanced security:
+
+```bash
+# Each team gets a dedicated token auth role
+vault write auth/token/roles/mobile-team-token \
+  allowed_policies="bazel-base,bazel-mobile-team" \
+  disallowed_policies="bazel-backend-team,bazel-frontend-team" \
+  renewable=false \
+  token_ttl="2h" \
+  token_max_ttl="4h"
+```
+
+**Security Benefits**:
+- **Team Isolation**: Each team can only create tokens for their own team (principle of least privilege)
+- **Policy Constraints**: Role-based allowed/disallowed policy enforcement
+- **Token Creation Security**: Teams cannot create tokens for other teams (e.g., mobile team cannot create backend tokens)
+- **Non-Renewable**: Tokens cannot be renewed, limiting exposure
+- **Limited TTL**: Maximum 2-4 hour token lifetime
+- **DevOps Exception**: DevOps team retains cross-functional token creation for operational needs
+- **Alias Churn Prevention**: Team members share entities efficiently
+
 ### Secret Organization
 
 Organize secrets by team in Vault:

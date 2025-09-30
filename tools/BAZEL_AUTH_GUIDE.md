@@ -1,6 +1,14 @@
 # Authentication Tools for Bazel JWT Vault Demo
 
-This directory contains authentication tools to simplify the **Okta OIDC authentication flow** for Bazel builds using **Authorization Code Flow with PKCE**.
+This directory contains authentication tools to simplify the **Okta OIDC authentication flow** for Bazel builds using **Authorization Code Flow with PKCE** and **hybrid JWT + token roles authentication**.
+
+## Architecture Overview
+
+The system uses a **hybrid authentication approach**:
+- **Okta OIDC**: User authentication with enterprise identity provider
+- **Broker JWT Authentication**: Broker generates team-based JWTs and authenticates with Vault via `auth/jwt/login`
+- **Token Role Creation**: Broker creates user tokens via token roles (`auth/token/create/{role}`) with team-specific policies
+- **Team-Based Access**: Final tokens have team-scoped permissions based on Okta group membership
 
 ## Quick Start
 
@@ -95,15 +103,18 @@ A bash wrapper that combines authentication with Bazel execution.
 ./tools/bazel-build --pipeline ci //my:target      # Custom metadata
 ```
 
-## Authentication Flow (PKCE)
+## Authentication Flow (Hybrid JWT + Token Roles)
 
 1. **Start**: Tool initiates Authorization Code Flow with PKCE
 2. **Browser**: Automatically opens Okta authentication URL
 3. **Login**: User completes Okta authentication with credentials
 4. **Callback**: Browser redirects to enhanced callback page with session ID
-5. **Session**: Session ID is displayed with auto-copy functionality
-6. **Exchange**: Tool exchanges session for team-scoped Vault token
-7. **Ready**: Token is set in environment for immediate use
+5. **Team Selection**: User selects team context (if member of multiple teams)
+6. **Broker JWT**: Broker generates team-based JWT and authenticates with Vault via JWT auth method
+7. **Token Creation**: Broker creates child tokens using token roles with team-specific policies
+8. **Session**: Session ID is displayed with auto-copy functionality
+9. **Exchange**: Tool exchanges session for team-scoped Vault token
+10. **Ready**: Token is set in environment for immediate use
 
 ## Enhanced Developer Experience
 
@@ -128,11 +139,22 @@ The enhanced callback page automatically:
 
 ## Configuration
 
+### Docker Network Context
+This is a **Docker POC** with services running in containers. Understanding the network context is important:
+
+- **From host machine**: Use `http://localhost:8200` for Vault, `http://localhost:8081` for broker
+- **Between containers**: Services use Docker service names like `http://vault:8200`
+- **Environment variables**: `.env` file uses container names for inter-service communication
+
 ### Environment Variables
 ```bash
-export BROKER_URL="http://localhost:8081"    # Broker service URL
+export BROKER_URL="http://localhost:8081"    # Broker service URL (from host)
+export VAULT_ADDR="http://localhost:8200"    # Vault address (from host)
 export PIPELINE="my-pipeline"                # Default pipeline name
 export REPO="my-repo"                       # Default repository name
+
+# For debugging, you may need the root token from .env
+export VAULT_TOKEN="${VAULT_ROOT_TOKEN}"     # Use root token for admin commands
 ```
 
 ### Dependencies
@@ -182,13 +204,48 @@ bazel build //frontend:app
 
 ### Common Issues
 
-**"Connection failed" errors:**
+### Common Issues
+
+**"Connection failed" or "no such host" errors:**
 ```bash
 # Check if broker is running
 curl http://localhost:8081/health
 
-# Check Docker containers
-docker ps | grep bazel-broker
+# Check Docker containers are running
+docker ps | grep -E "(vault|broker)"
+
+# Verify services are accessible from host
+curl -s http://localhost:8200/v1/sys/health
+curl -s http://localhost:8081/health
+```
+
+**Vault CLI commands failing:**
+The issue is usually Docker networking. From the host machine, always use `localhost`:
+```bash
+# WRONG (from host machine):
+vault auth list  # Uses VAULT_ADDR=http://vault:8200 from .env
+
+# CORRECT (from host machine):
+VAULT_ADDR=http://localhost:8200 VAULT_TOKEN=${VAULT_ROOT_TOKEN} vault auth list
+
+# Or source .env and override VAULT_ADDR:
+source .env
+export VAULT_ADDR=http://localhost:8200
+vault auth list
+```
+
+**Verify Vault JWT auth is configured:**
+```bash
+# Use localhost from host machine with root token
+VAULT_ADDR=http://localhost:8200 VAULT_TOKEN=${VAULT_ROOT_TOKEN} vault auth list
+VAULT_ADDR=http://localhost:8200 VAULT_TOKEN=${VAULT_ROOT_TOKEN} vault read auth/jwt/config
+VAULT_ADDR=http://localhost:8200 VAULT_TOKEN=${VAULT_ROOT_TOKEN} vault list auth/jwt/role
+
+# Check token roles
+VAULT_ADDR=http://localhost:8200 VAULT_TOKEN=${VAULT_ROOT_TOKEN} vault list auth/token/roles
+
+# Alternative: Use docker exec to run commands inside Vault container
+docker exec -e VAULT_TOKEN=${VAULT_ROOT_TOKEN} jenkins-vault-poc-vault-1 vault auth list
 ```
 
 **"Invalid session" errors:**

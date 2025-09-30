@@ -73,13 +73,14 @@ The system implements an enterprise-grade authentication architecture using:
 - **Session Management**: Web-based authentication interface
 - **Token Exchange**: OIDC token → Vault token conversion
 - **Team Resolution**: Maps Okta groups to Vault entities
-- **Child Token Creation**: Generates team-scoped Vault tokens
+- **Secure Token Creation**: Generates team-constrained Vault tokens using token auth roles
 
 #### HashiCorp Vault
 - **Secret Storage**: Encrypted secret management
 - **OIDC Authentication**: Native OIDC auth method integration
 - **Policy Engine**: Team-based access control policies
-- **Identity Management**: Entity and group management
+- **Identity Management**: Entity and group management with alias churn prevention
+- **Token Auth Roles**: Role-based token creation with policy constraints
 
 ## Authentication Flow
 
@@ -115,14 +116,14 @@ sequenceDiagram
     Okta->>Broker: User info with group membership
     Broker->>Vault: JWT auth with Okta ID token
     Vault->>Okta: Verify token signature (JWKS)
-    Vault->>Broker: Returns team-scoped Vault token
+    Vault->>Broker: Returns parent token with team policies
     
     Broker->>Browser: Enhanced callback page with session_id
     Browser->>User: Display session_id with auto-copy
     User->>CLI: Copy session_id from browser
     CLI->>Broker: POST /exchange with session_id + metadata
-    Broker->>Vault: Create child token with team policies
-    Vault->>Broker: Team-specific child token
+    Broker->>Vault: Create child token using team-specific token auth role
+    Vault->>Broker: Role-constrained child token (non-renewable, limited uses)
     Broker->>CLI: Return token + metadata
     CLI->>User: Export VAULT_TOKEN for use
 ```
@@ -297,6 +298,65 @@ User Request
 - **Monitoring**: Real-time alerting on unusual patterns
 - **Compliance**: Standards-compliant OIDC implementation
 - **Key Management**: Secure key storage and rotation
+
+### Token Auth Role Security Model
+
+The system implements enhanced security through **hybrid JWT + token auth roles** with **team-specific token creation permissions**:
+
+#### Hybrid Authentication Architecture
+```
+Okta OIDC → Broker JWT Generation → JWT Authentication → Token Role Creation
+    │               │                      │                    │
+    │               │                      │                    ▼
+    │               │                      │        ┌─────────────────────────┐
+    │               │                      │        │   Team-Specific Token   │
+    │               │                      │        │   Creation Permissions  │
+    │               │                      │        ├─────────────────────────┤
+    │               │                      │        │ mobile → mobile-token   │
+    │               │                      │        │ backend → backend-token │
+    │               │                      │        │ frontend → frontend-token│
+    │               │                      │        │ devops → all tokens     │
+    │               │                      │        └─────────────────────────┘
+    │               │                      │                    │
+    │               │                      ▼                    ▼
+    │               ▼              JWT Auth (Parent Token)  Child Token Creation
+    ▼         Team-based JWT       with team policies      (Role-Constrained)
+User Auth     (team as subject)
+```
+
+#### Security Benefits
+- **Team Isolation**: Each team can only create tokens for their own team (principle of least privilege)
+- **Policy Constraints**: Token roles enforce `allowed_policies` and `disallowed_policies`
+- **Non-Renewable Tokens**: Child tokens cannot be renewed, limiting exposure window
+- **Limited Uses**: Each token restricted to maximum usage count
+- **Cross-Team Prevention**: Mobile team cannot create backend team tokens (enforced at policy level)
+- **DevOps Exception**: DevOps team retains cross-functional access for operational needs
+- **Alias Churn Prevention**: Team members share entities without timestamp updates
+- **Licensing Efficiency**: Reduces Vault license costs through entity reuse
+
+#### Team-Specific Token Creation Security
+Each team policy includes only their own token creation permissions:
+
+```hcl
+# Mobile Team Policy
+path "auth/token/create/mobile-team-token" {
+  capabilities = ["create", "update"]
+}
+# Cannot access: backend-team-token, frontend-team-token
+
+# DevOps Team Policy (Exception)
+path "auth/token/create/*" {
+  capabilities = ["create", "update"]  # Cross-functional access
+}
+```
+
+#### Token Role Configuration
+Each team gets a dedicated token auth role:
+
+- **Allowed Policies**: Team-specific + base policies only
+- **Disallowed Policies**: All other team policies explicitly blocked
+- **Token Properties**: Non-renewable, 2-hour TTL, 10-use maximum
+- **Entity Sharing**: Team members share single entity per team (no churn)
 
 ## Deployment Architecture
 

@@ -1,16 +1,16 @@
 # Bazel JWT Vault Demo - Enterprise Team-Based Authentication
 
-A demonstration of **enterprise team-based authentication** with HashiCorp Vault and Okta, implementing **broker-generated JWT tokens** for team-based secret access. 
+A demonstration of **enterprise team-based authentication** with HashiCorp Vault and Okta, implementing **broker-generated JWT authentication** with **token roles** for team-based secret access. 
 
 - **[Complete Setup Guide](docs/SETUP.md)**: Step-by-step configuration instructions
-- **[Architecture Documentation](docs/ARCHITECTURE.md)**: System design and JWT flow details
+- **[Architecture Documentation](docs/ARCHITECTURE.md)**: System design and token auth flow details
 - **[Development Guide](docs/DEVELOPMENT.md)**: Development and troubleshooting
 - **[Testing Guide](docs/TESTING.md)**: Comprehensive testing procedures
 
 ## Realistic Enterprise Demo
 
 This system demonstrates enterprise features suitable for real-world scenarios:
-- **RSA-Signed JWTs**: Secure broker-generated tokens with 2048-bit RSA key pairs
+- **Hybrid Authentication**: JWT auth for broker authentication + token roles for user token creation
 - **Team Entity Stability**: Consistent team entities eliminate access inconsistencies
 - **Time-Limited Tokens**: Automatic expiration and usage limits
 - **Network Integration**: Works within existing Docker network infrastructure
@@ -24,19 +24,20 @@ For detailed setup and deployment instructions, see [docs/SETUP.md](docs/SETUP.m
 ### **Enterprise Team-Based Authentication**
 - **Okta Integration**: Single sign-on with your existing Okta identity provider using PKCE flow
 - **Team Context Selection**: Multi-team users can select their working context
-- **Broker-Generated JWTs**: Secure RSA-signed tokens with team subjects for stable entity management
+- **Hybrid Authentication**: JWT auth method for broker authentication + token roles for user token creation
 - **Stable Team Entities**: One entity per team with consistent aliases, eliminating entity churn
 - **Zero Configuration**: Developers simply login with their Okta credentials and select team context
-- **Complete Automation**: OIDC flow, team selection, JWT generation, and Vault authentication all seamless
+- **Complete Automation**: OIDC flow, team selection, JWT authentication, and token role-based token creation
 
 ### **Security & Compliance**
-- **RSA-Signed JWTs**: Broker-generated tokens with 2048-bit RSA key pairs for enhanced security
+- **Hybrid Authentication**: JWT auth method for broker validation + token roles for secure token creation
 - **Team-Based Isolation**: Teams can only access their designated secrets via stable team entities
+- **Team-Specific Token Creation**: Each team can only create tokens for their own team (principle of least privilege)
 - **Stable Entity Management**: One entity per team eliminates entity churn and access inconsistencies
 - **Time-Limited Tokens**: Tokens expire automatically (2h default, 4h max)
 - **Limited Usage**: Tokens have restricted number of uses for security
 - **Audit Trail**: All authentication events logged with team context and user metadata
-- **Enterprise Standards**: OIDC compliance with secure JWT token architecture
+- **Enterprise Standards**: OIDC compliance with secure JWT + token role architecture
 
 ### **Developer Experience**
 - **Enhanced Callback UI**: Beautiful web interface with auto-copy functionality
@@ -60,12 +61,12 @@ sequenceDiagram
     participant Dev as Developer
     participant CLI as CLI Tool
     participant Browser as Web Browser
-    participant Broker as JWT Broker
+    participant Broker as Auth Broker
     participant Okta as Okta Identity
     participant Vault as HashiCorp Vault
     participant Secrets as Team Secrets
 
-    Note over Dev,Secrets: Broker-Generated JWT Flow
+    Note over Dev,Secrets: Hybrid JWT + Token Roles Flow
 
     Dev->>CLI: ./bazel-auth-simple
     CLI->>Broker: POST /cli/start (generate PKCE)
@@ -83,11 +84,12 @@ sequenceDiagram
         Dev->>Browser: Select team context
         Browser->>Broker: POST selected team
     end
-    Broker->>Broker: Generate RSA-signed JWT (sub=team)
-    Broker->>Vault: Authenticate with team JWT
-    Vault->>Broker: Verify JWT signature (public key)
-    Vault->>Vault: Create/reuse team entity + alias
-    Vault-->>Broker: Team-scoped Vault token
+    Broker->>Broker: Generate team-based JWT
+    Broker->>Vault: JWT authentication (auth/jwt/login)
+    Vault->>Vault: Validate broker JWT + create/reuse team entity
+    Vault-->>Broker: Parent Vault token
+    Broker->>Vault: Create child token via token role (auth/token/create/{role})
+    Vault-->>Broker: Child token with team policies
     Broker-->>Browser: Enhanced callback page + session ID
     Dev->>CLI: Copy session ID from browser
     CLI->>Broker: POST /exchange with session ID
@@ -107,7 +109,7 @@ sequenceDiagram
 │                  (jenkins-vault-poc_default)                │
 │                                                             │
 │   ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
-│   │   Jenkins   │  │    Vault    │  │   JWT Broker        │ │
+│   │   Jenkins   │  │    Vault    │  │   Auth Broker       │ │
 │   │ 172.18.0.3  │  │ 172.18.0.2  │  │   172.18.0.4        │ │
 │   │    :8080    │  │    :8200    │  │      :8081          │ │
 │   └─────────────┘  └─────────────┘  └─────────────────────┘ │
@@ -118,8 +120,8 @@ sequenceDiagram
 │                    └─────────────────┘        │             │
 │                                               │             │
 │                     ┌─────────────────────────┐             │
-│                     │ RSA Key Pair            │             │
-│                     │ (JWT Signing)           │             │
+│                     │ JWT Auth + Token Roles  │             │
+│                     │ (Hybrid Authentication) │             │
 │                     └─────────────────────────┘             │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -137,9 +139,6 @@ sequenceDiagram
 # Clone and configure
 git clone https://github.com/trenner1/bazel-jwt-vault-demo.git
 cd bazel-jwt-vault-demo
-
-# Generate JWT signing keys
-./scripts/generate-jwt-keys.sh
 
 # Configure environment - update with your Okta details
 vim .env  # See docs/SETUP.md for configuration details - ensure to copy the root token from the jenkins poc into your .env before running the next step.
@@ -250,12 +249,12 @@ curl -X POST "http://localhost:8081/exchange" \
 
 Teams are automatically assigned based on Okta group membership. Users with multiple team memberships can select their working context:
 
-| Okta Group | Vault Role | Secret Access | Entity Management |
-|------------|------------|---------------|-------------------|
-| `mobile-developers` | `mobile-team` | `kv/dev/mobile/*` | Stable "mobile-team" entity |
-| `backend-developers` | `backend-team` | `kv/dev/backend/*` | Stable "backend-team" entity |
-| `frontend-developers` | `frontend-team` | `kv/dev/frontend/*` | Stable "frontend-team" entity |
-| `devops-team` | `devops-team` | All team secrets | Stable "devops-team" entity |
+| Okta Group | JWT Role | Token Role | Token Creation Access | Secret Access | Entity Management |
+|------------|----------|------------|----------------------|---------------|-------------------|
+| `mobile-developers` | `mobile-team` | `mobile-team-token` | `mobile-team-token` only | `kv/dev/mobile/*` | Stable "mobile-team" entity |
+| `backend-developers` | `backend-team` | `backend-team-token` | `backend-team-token` only | `kv/dev/backend/*` | Stable "backend-team" entity |
+| `frontend-developers` | `frontend-team` | `frontend-team-token` | `frontend-team-token` only | `kv/dev/frontend/*` | Stable "frontend-team" entity |
+| `devops-team` | `devops-team` | `devops-team-token` | All team token roles | All team secrets | Stable "devops-team" entity |
 
 ### Team Entity Benefits
 
@@ -294,7 +293,7 @@ The system includes a comprehensive test suite that validates all functionality:
 ## Recent Improvements
 
 ### Authentication System Fixes
-- JWT Audience Fix: Corrected broker token generation for proper Vault validation
+- Token Auth Roles: Implemented secure team-based authentication using Vault's token auth method
 - Team Selection Fix: Users' selected teams are now properly respected (was defaulting to first group)
 - Stable Entity Management: Team entities are consistently reused across authentication sessions
 
@@ -349,9 +348,14 @@ For detailed setup and deployment instructions, see [docs/SETUP.md](docs/SETUP.m
 # Check broker health
 curl http://localhost:8081/health
 
-# Check Vault JWT configuration
+# Check Vault JWT auth configuration
 vault auth list
 vault read auth/jwt/config
+vault list auth/jwt/role
+
+# Check token roles configuration  
+vault list auth/token/roles
+vault read auth/token/roles/mobile-team-token
 
 # Test Okta connectivity (via broker)
 curl -s "https://${OKTA_DOMAIN}/.well-known/openid_configuration"
@@ -365,13 +369,13 @@ vault list identity/entity-alias/id
 
 ### Compared to Direct OIDC Approach
 
-| Feature | Direct OIDC | Broker-Generated JWT |
-|---------|-------------|---------------------|
+| Feature | Direct OIDC | Broker-Generated JWTs + Token Roles |
+|---------|-------------|--------------------------------------|
 | **Entity Management** | Individual user entities | Stable team entities |
 | **Entity Churn** | New entities per auth | Consistent entity reuse |
 | **Team Isolation** | User-based permissions | Team-based entity sharing |
 | **Multi-Team Users** | Complex group mappings | Clean team context selection |
-| **Token Source** | External OIDC provider | Broker-controlled JWTs |
+| **Token Source** | External OIDC provider | Broker JWT + token role creation |
 | **Alias Stability** | User-dependent aliases | Predictable team aliases |
 | **Scaling** | Entities scale with users | Entities scale with teams |
 
@@ -382,7 +386,8 @@ vault list identity/entity-alias/id
  **Team Context Selection**: Clean interface for multi-team users  
  **Predictable Access**: Team-based permissions with stable entity management  
  **Enterprise-Grade Integration**: Works with existing Okta directory structure  
- **RSA Security**: Broker-controlled JWT signing with secure key management  
+ **Hybrid Authentication**: JWT auth for broker authentication + token roles for secure token creation  
+ **Security Isolation**: Each team can only create tokens for their own team (least privilege principle)  
 
 ##  Repository Structure
 
@@ -396,13 +401,9 @@ bazel-jwt-vault-demo/
 ├── .gitignore                       # Git ignore patterns
 ├── MODULE.bazel                     # Bazel configuration
 │
-├── broker/                          # JWT broker implementation
-│   ├── app.py                       # Team-based JWT broker with OIDC integration
-│   ├── gen_keys.py                  # RSA key pair generation
-│   ├── jwt_signing_key              # RSA private key (generated)
-│   ├── jwt_signing_key.pub          # RSA public key (generated)
-│   ├── jwks.json                    # JSON Web Key Set endpoint
-│   ├── signer_keys.json             # Key metadata for JWT signing
+├── broker/                          # Token auth broker implementation
+│   ├── app.py                       # Team-based token broker with OIDC integration
+│   ├── gen_keys.py                  # Key generation utilities
 │   ├── requirements.txt             # Python dependencies
 │   └── start.py                     # Broker startup script
 │
@@ -416,7 +417,7 @@ bazel-jwt-vault-demo/
 │   └── bazel_auth_example.py        # Python authentication example
 │
 ├── scripts/                         # Utility scripts
-│   ├── start-broker.sh              # Broker startup (updated for JWT generation)
+│   ├── start-broker.sh              # Broker startup (updated for token auth)
 │   └── docker-setup.sh              # Docker environment setup
 │
 ├── tests/                           # Test suites
@@ -436,8 +437,8 @@ bazel-jwt-vault-demo/
 │   ├── bazel-build                  # Bazel wrapper with auto-auth
 │   └── requirements.txt             # Python dependencies for bazel-auth
 │
-└── vault/                           # Vault JWT configuration
-    └── setup.sh                     # Vault setup for broker-based JWT auth
+└── vault/                           # Vault token auth configuration
+    └── setup.sh                     # Vault setup for token auth roles
 ```
 
 ##  License
